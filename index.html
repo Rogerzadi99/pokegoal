@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#FAFAF7"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Metas"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon.svg"/>
+  <title>Metas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #FAFAF7;
+      font-family: -apple-system, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    #root { height: 100vh; height: 100dvh; position: relative; overflow: hidden; }
+    button { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyBeJbnlYOy6X32Y4EL4-YZ4h2HCtUzKaOE",
+    authDomain: "pokegoal-app.firebaseapp.com",
+    projectId: "pokegoal-app",
+    storageBucket: "pokegoal-app.firebasestorage.app",
+    messagingSenderId: "1086040716275",
+    appId: "1:1086040716275:web:56b23a6c50af1a90c65886"
+  });
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
+</script>
+
+<script type="text/babel">
+
+// ═══════════════════════════════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════════════════════════════
+
+function IconDumbbell({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5v11M3 9v5M17.5 6.5v11M21 9v5M6.5 12h11"/></svg>;
+}
+function IconLotus({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M12 6c2 3 3 6 3 9M12 6c-2 3-3 6-3 9M12 6v9"/><path d="M12 15c-3 0-6-1-9-3 2 4 5 6 9 6s7-2 9-6c-3 2-6 3-9 3Z"/></svg>;
+}
+function IconBook({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h12"/></svg>;
+}
+function IconCheck({ size = 24, color = 'currentColor', weight = 2.5 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6 10-12"/></svg>;
+}
+function IconFlame({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4"/><path d="M12 21a5 5 0 0 0 5-5c0-2-1-3-2-4-0.5 1-1.5 2-3 2-1 0-2-1-2-2-2 1-3 3-3 5a5 5 0 0 0 5 4Z"/></svg>;
+}
+function IconTimer({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 3h6"/></svg>;
+}
+function IconNote({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h10l4 4v12H5z"/><path d="M9 12h6M9 16h4"/></svg>;
+}
+function IconPlay({ size = 24, color = 'currentColor' }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M7 5v14l12-7z"/></svg>;
+}
+function IconPause({ size = 24, color = 'currentColor' }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>;
+}
+function IconX({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>;
+}
+function IconGear({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+}
+function IconRun({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><circle cx="13" cy="4" r="1"/><path d="M7 21l1-4 3 2 3-7"/><path d="M7 13c2 0 3-1 4-3l1-2c1-2 3-2 5-1"/><path d="M12 11l-3 2"/></svg>;
+}
+function IconWater({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6 10 4 14 4 16a8 8 0 0 0 16 0c0-2-2-6-8-14z"/></svg>;
+}
+function IconBrain({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.14"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.14"/></svg>;
+}
+function IconHeartGoal({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+}
+function IconMoon({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+}
+function IconPencil({ size = 24, color = 'currentColor', weight = 2 }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CREATURE SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+const CREATURE_TYPES = {
+  fire:     { name: 'Fuego',     color: '#D94A1F', soft: '#FDE6DC', glyph: 'flame'  },
+  water:    { name: 'Agua',      color: '#1F6FD9', soft: '#DCE9FD', glyph: 'drop'   },
+  psychic:  { name: 'Psíquico',  color: '#9333C7', soft: '#F0DFFD', glyph: 'swirl'  },
+  grass:    { name: 'Planta',    color: '#2F8B3F', soft: '#DEF3E0', glyph: 'leaf'   },
+  electric: { name: 'Eléctrico', color: '#D9A51F', soft: '#FDF3DC', glyph: 'bolt'   },
+};
+const CREATURE_ANIMALS = {
+  cat:       { name: 'Gato',     ears: 'pointed', tail: 'long',   body: 'oval'   },
+  dragon:    { name: 'Dragón',   ears: 'horns',   tail: 'spiked', body: 'oval'   },
+  bird:      { name: 'Ave',      ears: 'crest',   tail: 'fan',    body: 'egg'    },
+  amphibian: { name: 'Anfibio',  ears: 'bulge',   tail: 'none',   body: 'wide'   },
+  bear:      { name: 'Oso',      ears: 'round',   tail: 'nub',    body: 'chunky' },
+};
+const ALL_VARIANTS = ['a', 'b', 'c'];
+const STAGE_NAMES = ['Huevo', 'Fase Inicial', 'Fase Aprendiz', 'Fase Final'];
+const STAGE_NEXT  = [10, 20, 30, null];
+
+function pickVariant(typeKey, animalKey, pokedexHistory) {
+  const used = pokedexHistory
+    .filter(e => e.typeKey === typeKey && e.animalKey === animalKey && e.variantKey)
+    .map(e => e.variantKey);
+  const available = ALL_VARIANTS.filter(v => !used.includes(v));
+  const pool = available.length > 0 ? available : ALL_VARIANTS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function creatureStageFor(d) { if (d < 10) return 0; if (d < 20) return 1; if (d < 30) return 2; return 3; }
+
+function typeGlyph(type, cx, cy, r, fill) {
+  switch (type.glyph) {
+    case 'flame':   return <path d={`M ${cx} ${cy-r} q ${r*.6} ${r*.5},0 ${r*1.8} q -${r*.6} -${r*.5},0 -${r*1.8}`} fill={fill}/>;
+    case 'drop':    return <path d={`M ${cx} ${cy-r} q ${r*.8} ${r},0 ${r*1.8} q -${r*.8} -${r*.8},0 -${r*1.8}`} fill={fill}/>;
+    case 'swirl':   return <path d={`M ${cx-r*.6} ${cy} q ${r*.6} -${r*.6},${r*1.2} 0 q -${r*.6} ${r*.6},-${r*1.2} 0`} fill="none" stroke={fill} strokeWidth={r*.3} strokeLinecap="round"/>;
+    case 'leaf':    return <path d={`M ${cx-r*.6} ${cy+r*.4} q ${r*.6} -${r*1.6},${r*1.2} 0 q -${r*.6} ${r*.6},-${r*1.2} 0 Z`} fill={fill}/>;
+    case 'bolt':    return <path d={`M ${cx-r*.15} ${cy-r} l -${r*.3} ${r*.8} l ${r*.25} 0 l -${r*.15} ${r*.9} l ${r*.55} -${r} l -${r*.25} 0 l ${r*.1} -${r*.7} Z`} fill={fill}/>;
+    case 'moon':    return <path d={`M ${cx+r*.3} ${cy-r*.7} a ${r*.8} ${r*.8} 0 1 0 0 ${r*1.4} a ${r*.6} ${r*.6} 0 1 1 0 -${r*1.4} Z`} fill={fill}/>;
+    default: return null;
+  }
+}
+function typeGlyphIcon(t, fill) {
+  switch (t.glyph) {
+    case 'flame': return <image href="https://storage.googleapis.com/pokegoal-app.firebasestorage.app/ui/fuego_white.png" x="1" y="1" width="22" height="22"/>;
+    case 'drop':  return <path d="M12 3c0 0 6 6 6 11a6 6 0 01-12 0c0-5 6-11 6-11z" fill={fill}/>;
+    case 'swirl': return <path d="M5 12c2-4 6-4 8 0s6 4 8 0" fill="none" stroke={fill} strokeWidth="2.5" strokeLinecap="round"/>;
+    case 'leaf':  return <path d="M5 19c0-8 6-14 14-14-1 9-6 14-14 14z" fill={fill}/>;
+    case 'bolt':  return <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill={fill}/>;
+    case 'moon':  return <path d="M18 14a8 8 0 11-8-10 6 6 0 008 10z" fill={fill}/>;
+    default: return null;
+  }
+}
+function drawEars(ears, s, color) {
+  switch (ears) {
+    case 'pointed': return <g><path d={`M ${s*.32} ${s*.32} l ${s*.04} -${s*.14} l ${s*.08} ${s*.08} Z`} fill={color}/><path d={`M ${s*.68} ${s*.32} l -${s*.04} -${s*.14} l -${s*.08} ${s*.08} Z`} fill={color}/></g>;
+    case 'horns':   return <g><path d={`M ${s*.34} ${s*.3} q -${s*.03} -${s*.12},${s*.06} -${s*.14} q ${s*.02} ${s*.06},-${s*.01} ${s*.14} Z`} fill={color}/><path d={`M ${s*.66} ${s*.3} q ${s*.03} -${s*.12},-${s*.06} -${s*.14} q -${s*.02} ${s*.06},${s*.01} ${s*.14} Z`} fill={color}/></g>;
+    case 'crest':   return <g><path d={`M ${s*.46} ${s*.26} l ${s*.04} -${s*.12} l ${s*.04} ${s*.08} l ${s*.04} -${s*.1} l ${s*.02} ${s*.14} Z`} fill={color}/></g>;
+    case 'round':   return <g><circle cx={s*.33} cy={s*.3} r={s*.07} fill={color}/><circle cx={s*.67} cy={s*.3} r={s*.07} fill={color}/></g>;
+    case 'bulge':   return <g><circle cx={s*.38} cy={s*.3} r={s*.08} fill={color}/><circle cx={s*.62} cy={s*.3} r={s*.08} fill={color}/></g>;
+    default: return null;
+  }
+}
+function drawTail(tail, s, color) {
+  switch (tail) {
+    case 'long':   return <path d={`M ${s*.72} ${s*.6} q ${s*.18} 0,${s*.2} -${s*.14}`} fill="none" stroke={color} strokeWidth={s*.04} strokeLinecap="round"/>;
+    case 'spiked': return <path d={`M ${s*.72} ${s*.6} l ${s*.15} -${s*.02} l -${s*.02} -${s*.06}`} fill="none" stroke={color} strokeWidth={s*.04} strokeLinecap="round" strokeLinejoin="round"/>;
+    case 'fan':    return <path d={`M ${s*.75} ${s*.58} l ${s*.14} -${s*.08} l -${s*.02} ${s*.1} l ${s*.1} 0 l -${s*.14} ${s*.08} Z`} fill={color}/>;
+    case 'curl':   return <path d={`M ${s*.72} ${s*.6} q ${s*.1} -${s*.05},${s*.08} ${s*.05} q -${s*.04} ${s*.05},-${s*.08} 0`} fill="none" stroke={color} strokeWidth={s*.035} strokeLinecap="round"/>;
+    case 'nub':    return <circle cx={s*.76} cy={s*.58} r={s*.03} fill={color}/>;
+    default: return null;
+  }
+}
+function drawBody(body, s, color) {
+  switch (body) {
+    case 'oval':   return <ellipse cx={s*.5} cy={s*.56} rx={s*.26} ry={s*.26} fill={color}/>;
+    case 'egg':    return <ellipse cx={s*.5} cy={s*.56} rx={s*.24} ry={s*.28} fill={color}/>;
+    case 'round':  return <circle  cx={s*.5} cy={s*.55} r={s*.27}  fill={color}/>;
+    case 'wide':   return <ellipse cx={s*.5} cy={s*.58} rx={s*.3}  ry={s*.22} fill={color}/>;
+    case 'chunky': return <ellipse cx={s*.5} cy={s*.6}  rx={s*.3}  ry={s*.28} fill={color}/>;
+    default:       return <ellipse cx={s*.5} cy={s*.56} rx={s*.26} ry={s*.26} fill={color}/>;
+  }
+}
+const STORAGE_BASE = 'https://storage.googleapis.com/pokegoal-app.firebasestorage.app';
+
+function Creature({ stage=0, size=180, type=CREATURE_TYPES.fire, animal=CREATURE_ANIMALS.cat, typeKey='fire', animalKey='cat', variantKey='a', bounce=true, mono=false, monoColor='#111' }) {
+  const [useImg, setUseImg] = React.useState(true);
+  const imgUrl = `${STORAGE_BASE}/creatures/${animalKey}/${typeKey}/${variantKey}/stage${stage+1}.webp`;
+  React.useEffect(() => { setUseImg(true); }, [imgUrl]);
+
+  const s = size, bodyColor = mono ? monoColor : type.color, accent = mono ? monoColor : type.soft, eye = '#fff';
+  const renderSVG = () => {
+    if (stage === 0) return <g><ellipse cx={s*.5} cy={s*.54} rx={s*.3} ry={s*.36} fill={bodyColor}/><path d={`M ${s*.36} ${s*.54} l ${s*.06} -${s*.04} l ${s*.04} ${s*.05} l ${s*.06} -${s*.05} l ${s*.04} ${s*.05} l ${s*.06} -${s*.04}`} stroke={accent} strokeWidth={s*.022} fill="none" strokeLinecap="round" strokeLinejoin="round"/></g>;
+    if (stage === 1) return <g><ellipse cx={s*.5} cy={s*.58} rx={s*.22} ry={s*.24} fill={bodyColor}/><circle cx={s*.43} cy={s*.55} r={s*.024} fill={eye}/><circle cx={s*.57} cy={s*.55} r={s*.024} fill={eye}/><path d={`M ${s*.46} ${s*.64} q ${s*.04} ${s*.02},${s*.08} 0`} stroke={eye} strokeWidth={s*.012} fill="none" strokeLinecap="round"/>{typeGlyph(type,s*.5,s*.75,s*.04,accent)}</g>;
+    if (stage === 2) return <g>{drawTail(animal.tail,s,bodyColor)}{drawEars(animal.ears,s,bodyColor)}{drawBody(animal.body,s,bodyColor)}<circle cx={s*.36} cy={s*.6} r={s*.025} fill={accent}/><circle cx={s*.64} cy={s*.6} r={s*.025} fill={accent}/><circle cx={s*.43} cy={s*.53} r={s*.028} fill={eye}/><circle cx={s*.57} cy={s*.53} r={s*.028} fill={eye}/><path d={`M ${s*.46} ${s*.64} q ${s*.04} ${s*.025},${s*.08} 0`} stroke={eye} strokeWidth={s*.014} fill="none" strokeLinecap="round"/>{typeGlyph(type,s*.5,s*.72,s*.04,accent)}</g>;
+    return <g><circle cx={s*.5} cy={s*.56} r={s*.44} fill="none" stroke={bodyColor} strokeWidth={s*.006} opacity="0.25" strokeDasharray={`${s*.02} ${s*.02}`}/>{drawTail(animal.tail,s,bodyColor)}{drawEars(animal.ears,s,bodyColor)}{drawBody(animal.body,s,bodyColor)}<path d={`M ${s*.5} ${s*.35} l -${s*.04} ${s*.08} l ${s*.08} 0 Z`} fill={accent}/><circle cx={s*.34} cy={s*.6} r={s*.028} fill={accent}/><circle cx={s*.66} cy={s*.6} r={s*.028} fill={accent}/><path d={`M ${s*.4} ${s*.53} l ${s*.06} -${s*.015} l -${s*.01} ${s*.045} Z`} fill={eye}/><path d={`M ${s*.6} ${s*.53} l -${s*.06} -${s*.015} l ${s*.01} ${s*.045} Z`} fill={eye}/><path d={`M ${s*.46} ${s*.65} q ${s*.04} ${s*.03},${s*.08} 0`} stroke={eye} strokeWidth={s*.015} fill="none" strokeLinecap="round"/>{typeGlyph(type,s*.5,s*.72,s*.055,accent)}</g>;
+  };
+  return (
+    <div style={{ display:'inline-block', animation: bounce ? 'creatureBob 3s ease-in-out infinite' : 'none' }}>
+      <style>{`@keyframes creatureBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
+      {useImg && !mono
+        ? <img src={imgUrl} width={s} height={s} style={{ display:'block', imageRendering:'pixelated' }} onError={() => setUseImg(false)}/>
+        : <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{ display:'block' }}>{renderSVG()}</svg>
+      }
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════
+
+function PomodoroModal({ open, onClose, goalName, durationMin = 25 }) {
+  const [secs, setSecs] = React.useState(durationMin * 60);
+  const [running, setRunning] = React.useState(false);
+  const [duration, setDuration] = React.useState(durationMin * 60);
+  React.useEffect(() => { if (open) { setSecs(durationMin*60); setDuration(durationMin*60); setRunning(false); } }, [open, durationMin]);
+  React.useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => setSecs(s => { if (s<=1){setRunning(false);return 0;} return s-1; }), 1000);
+    return () => clearInterval(id);
+  }, [running]);
+  if (!open) return null;
+  const pct = 1 - secs/duration, mm = String(Math.floor(secs/60)).padStart(2,'0'), ss2 = String(secs%60).padStart(2,'0');
+  return (
+    <div style={{ position:'absolute',inset:0,zIndex:100,background:'#111',color:'#fff',display:'flex',flexDirection:'column',animation:'pomoIn 0.3s ease',fontFamily:'-apple-system,system-ui' }}>
+      <style>{`@keyframes pomoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}`}</style>
+      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 0',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+        <div><div style={{ fontSize:11,color:'rgba(255,255,255,0.5)',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Foco</div><div style={{ fontSize:18,fontWeight:600,marginTop:2 }}>{goalName||'Sesión libre'}</div></div>
+        <button onClick={onClose} style={{ width:40,height:40,borderRadius:999,background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}><IconX size={18} color="#fff" weight={2.2}/></button>
+      </div>
+      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',position:'relative' }}>
+        <svg width={280} height={280} viewBox="0 0 280 280">
+          <circle cx="140" cy="140" r="130" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3"/>
+          <circle cx="140" cy="140" r="130" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${2*Math.PI*130}`} strokeDashoffset={`${2*Math.PI*130*(1-pct)}`} transform="rotate(-90 140 140)" style={{ transition:'stroke-dashoffset 1s linear' }}/>
+        </svg>
+        <div style={{ position:'absolute',textAlign:'center' }}>
+          <div style={{ fontSize:72,fontWeight:200,letterSpacing:-3,fontVariantNumeric:'tabular-nums' }}>{mm}:{ss2}</div>
+          <div style={{ fontSize:12,color:'rgba(255,255,255,0.5)',letterSpacing:2,textTransform:'uppercase',marginTop:4 }}>{running?'en foco':secs===0?'terminado':'listo'}</div>
+        </div>
+      </div>
+      {!running && secs===duration && (
+        <div style={{ display:'flex',gap:8,justifyContent:'center',padding:'0 24px 20px' }}>
+          {[5,10,15,25].map(m=>(
+            <button key={m} onClick={()=>{setSecs(m*60);setDuration(m*60);}} style={{ padding:'10px 16px',fontSize:13,fontWeight:600,background:duration===m*60?'#fff':'transparent',color:duration===m*60?'#111':'rgba(255,255,255,0.7)',border:'1px solid '+(duration===m*60?'#fff':'rgba(255,255,255,0.2)'),borderRadius:999,cursor:'pointer',fontFamily:'inherit' }}>{m} min</button>
+          ))}
+        </div>
+      )}
+      <div style={{ padding:'0 24px calc(env(safe-area-inset-bottom,0px) + 40px)',display:'flex',gap:10,justifyContent:'center' }}>
+        <button onClick={()=>{setSecs(duration);setRunning(false);}} style={{ width:56,height:56,borderRadius:999,background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:12,fontWeight:600,letterSpacing:1,fontFamily:'inherit' }}>RESET</button>
+        <button onClick={()=>setRunning(r=>!r)} style={{ width:88,height:88,borderRadius:999,background:'#fff',border:'none',color:'#111',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>{running?<IconPause size={34} color="#111"/>:<IconPlay size={34} color="#111"/>}</button>
+        <button onClick={onClose} style={{ width:56,height:56,borderRadius:999,background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:12,fontWeight:600,letterSpacing:1,fontFamily:'inherit' }}>LISTO</button>
+      </div>
+    </div>
+  );
+}
+
+function NoteModal({ open, initial, onClose, onSave }) {
+  const [val, setVal] = React.useState('');
+  React.useEffect(() => { if (open) setVal(initial||''); }, [open, initial]);
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position:'absolute',inset:0,zIndex:90,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'flex-end',animation:'noteBg 0.25s ease' }}>
+      <style>{`@keyframes noteBg{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,0.4)}}@keyframes noteSheet{from{transform:translateY(100%)}to{transform:none}}`}</style>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%',background:'#fff',borderTopLeftRadius:24,borderTopRightRadius:24,padding:'24px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',animation:'noteSheet 0.3s cubic-bezier(0.2,0.8,0.3,1)',fontFamily:'-apple-system,system-ui' }}>
+        <div style={{ width:36,height:4,background:'#E0E0E0',borderRadius:2,margin:'0 auto 16px' }}/>
+        <div style={{ fontSize:18,fontWeight:600,color:'#111',marginBottom:4 }}>¿Cómo te sentiste hoy?</div>
+        <div style={{ fontSize:13,color:'#999',marginBottom:16 }}>Una línea es suficiente.</div>
+        <textarea autoFocus value={val} onChange={e=>setVal(e.target.value)} placeholder="hoy…" style={{ width:'100%',minHeight:100,padding:14,border:'1px solid #EEE',borderRadius:12,fontSize:16,fontFamily:'inherit',color:'#111',resize:'none',outline:'none',boxSizing:'border-box' }}/>
+        <div style={{ display:'flex',gap:10,marginTop:14 }}>
+          <button onClick={onClose} style={{ flex:1,padding:'14px',background:'#F5F5F3',border:'none',borderRadius:12,fontSize:15,fontWeight:600,color:'#111',fontFamily:'inherit',cursor:'pointer' }}>Cancelar</button>
+          <button onClick={()=>{onSave(val);onClose();}} style={{ flex:1,padding:'14px',background:'#111',border:'none',borderRadius:12,fontSize:15,fontWeight:600,color:'#fff',fontFamily:'inherit',cursor:'pointer' }}>Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════════
+
+function Onboarding({ onDone }) {
+  const [step, setStep] = React.useState(0);
+  const [typeKey, setTypeKey] = React.useState('fire');
+  const [animalKey, setAnimalKey] = React.useState('cat');
+  const type = CREATURE_TYPES[typeKey], animal = CREATURE_ANIMALS[animalKey];
+  return (
+    <div style={{ height:'100%',background:'#FAFAF7',fontFamily:'-apple-system,system-ui',color:'#111',display:'flex',flexDirection:'column' }}>
+      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+        <div style={{ fontSize:12,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Paso {step+1} de 4</div>
+        <div style={{ display:'flex',gap:4 }}>{[0,1,2,3].map(i=><div key={i} style={{ width:20,height:3,borderRadius:2,background:i<=step?'#111':'#E5E2D8' }}/>)}</div>
+      </div>
+      {step===0 && (
+        <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 32px',textAlign:'center' }}>
+          <div style={{ display:'flex',justifyContent:'center',marginBottom:20 }}>
+            <Creature stage={0} size={120} type={CREATURE_TYPES.psychic} animal={CREATURE_ANIMALS.cat} typeKey="psychic" animalKey="cat" variantKey="a"/>
+          </div>
+          <div style={{ fontSize:32,fontWeight:700,letterSpacing:-0.8,lineHeight:1.15 }}>Tu criatura<br/>nace contigo</div>
+          <div style={{ fontSize:15,color:'#666',lineHeight:1.6,marginTop:14 }}>Completa tus metas cada día y evoluciona.</div>
+          <div style={{ marginTop:24,padding:'16px 20px',background:'#F5F3EC',borderRadius:16,textAlign:'left' }}>
+            <div style={{ fontSize:13,fontWeight:700,color:'#111',marginBottom:6 }}>3 vidas por ciclo</div>
+            <div style={{ fontSize:12,color:'#999',lineHeight:1.6 }}>Tienes 3 vidas al mes para fallar. Si las pierdes todas, tu criatura no podrá evolucionar.</div>
+          </div>
+        </div>
+      )}
+      {step===1 && (
+        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+          <div style={{ padding:'10px 24px 20px', display:'flex', flexDirection:'column', alignItems:'center', background:type.soft, transition:'background 0.3s ease' }}>
+            <Creature stage={0} size={130} type={type} animal={CREATURE_ANIMALS.cat} typeKey={typeKey} animalKey="cat" variantKey="a" bounce={true}/>
+            <div style={{ fontSize:18, fontWeight:700, color:type.color, marginTop:6, letterSpacing:-0.3, transition:'color 0.3s' }}>{type.name}</div>
+          </div>
+          <div style={{ padding:'18px 24px 10px' }}>
+            <div style={{ fontSize:24, fontWeight:700, letterSpacing:-0.5 }}>Elige su elemento</div>
+          </div>
+          <div style={{ flex:1, overflow:'auto', padding:'4px 20px 20px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8 }}>
+              {Object.entries(CREATURE_TYPES).map(([k,t])=>(
+                <button key={k} onClick={()=>setTypeKey(k)} style={{ padding:'10px 4px 12px', border:typeKey===k?`2.5px solid ${t.color}`:'1.5px solid #EFEDE3', background:typeKey===k?t.soft:'#fff', borderRadius:16, cursor:'pointer', fontFamily:'inherit', display:'flex', flexDirection:'column', alignItems:'center', gap:7, transition:'all 0.2s' }}>
+                  <div style={{ width:38, height:38, borderRadius:999, background:t.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <svg width={22} height={22} viewBox="0 0 24 24">{typeGlyphIcon(t,'#fff')}</svg>
+                  </div>
+                  <div style={{ fontSize:10, fontWeight:700, color:typeKey===k?t.color:'#666', textAlign:'center', lineHeight:1.2 }}>{t.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {step===2 && (
+        <div style={{ flex:1, overflow:'auto', padding:'0 20px 20px' }}>
+          <div style={{ padding:'4px 4px 18px' }}>
+            <div style={{ fontSize:24, fontWeight:700, letterSpacing:-0.5 }}>Elige su tipo</div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            {Object.entries(CREATURE_ANIMALS).map(([k,a])=>(
+              <button key={k} onClick={()=>setAnimalKey(k)} style={{ padding:'18px 12px 14px', border:animalKey===k?`2.5px solid ${type.color}`:'1.5px solid #EFEDE3', background:animalKey===k?type.soft:'#fff', borderRadius:20, cursor:'pointer', fontFamily:'inherit', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all 0.2s', position:'relative' }}>
+                {animalKey===k && <div style={{ position:'absolute', top:10, right:10, width:8, height:8, borderRadius:999, background:type.color }}/>}
+                <Creature stage={0} size={90} type={type} animal={a} typeKey={typeKey} animalKey={k} variantKey="a" bounce={animalKey===k}/>
+                <div style={{ fontSize:13, fontWeight:700, color:animalKey===k?'#111':'#555' }}>{a.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step===3 && (
+        <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 28px',textAlign:'center' }}>
+          <div style={{ fontSize:11,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Tu compañero</div>
+          <div style={{ display:'flex',justifyContent:'center',margin:'12px 0' }}>
+            <div style={{ width:180,height:180,borderRadius:999,background:type.soft,display:'flex',alignItems:'center',justifyContent:'center' }}>
+              <Creature stage={0} size={130} type={type} animal={animal} typeKey={typeKey} animalKey={animalKey} variantKey="a"/>
+            </div>
+          </div>
+          <div style={{ fontSize:24,fontWeight:700,letterSpacing:-0.4 }}>{animal.name} · {type.name}</div>
+          <div style={{ fontSize:14,color:'#666',marginTop:6,lineHeight:1.6 }}>Eclosiona al día 10 · Evoluciona al 20 · Forma final al 30.</div>
+          <div style={{ marginTop:18,padding:'14px 18px',background:'#F5F3EC',borderRadius:16,textAlign:'left' }}>
+            <div style={{ fontSize:13,fontWeight:700,color:'#111',marginBottom:6 }}>Carácter aleatorio</div>
+            <div style={{ fontSize:13,color:'#666',marginBottom:8 }}>Héroe · Villano · Mago</div>
+            <div style={{ fontSize:12,color:'#999',lineHeight:1.6 }}>Tu criatura recibirá un carácter al azar. Al completar su evolución, ese carácter ya no te volverá a tocar.</div>
+          </div>
+        </div>
+      )}
+      <div style={{ padding:'12px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',display:'flex',gap:10 }}>
+        {step>0 && <button onClick={()=>setStep(s=>s-1)} style={{ padding:'16px 22px',background:'#F5F3EC',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#111',fontFamily:'inherit',cursor:'pointer' }}>Atrás</button>}
+        <button onClick={()=>{ if(step<3) setStep(s=>s+1); else onDone({typeKey,animalKey}); }} style={{ flex:1,padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',fontFamily:'inherit',cursor:'pointer' }}>{step===3?'Empezar':'Siguiente'}</button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// POKÉDEX
+// ═══════════════════════════════════════════════════════════════
+
+const STAGE_THRESHOLDS = [0, 10, 20, 30];
+
+function Pokedex({ entries=[], onBack }) {
+  const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
+  return (
+    <div style={{ height:'100%',background:'#FAFAF7',fontFamily:'-apple-system,system-ui',color:'#111',display:'flex',flexDirection:'column' }}>
+      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 16px',display:'flex',alignItems:'center',gap:14 }}>
+        <button onClick={onBack} style={{ width:40,height:40,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#111' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div><div style={{ fontSize:11,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Mi colección</div><div style={{ fontSize:26,fontWeight:700,letterSpacing:-0.4,marginTop:1 }}>Criaturas</div></div>
+      </div>
+      <div style={{ margin:'0 20px 16px',padding:'14px 18px',background:'#111',color:'#fff',borderRadius:16,display:'flex',justifyContent:'space-around',textAlign:'center' }}>
+        {[['Criaturas', entries.length],['Completas', entries.filter(e=>e.daysReached>=30).length],['Días totales', entries.reduce((s,e)=>s+e.daysReached,0)]].map(([label,val],i,arr)=>(
+          <React.Fragment key={label}>
+            <div><div style={{ fontSize:22,fontWeight:700 }}>{val}</div><div style={{ fontSize:10,color:'rgba(255,255,255,0.6)',letterSpacing:1.5,textTransform:'uppercase' }}>{label}</div></div>
+            {i<arr.length-1 && <div style={{ width:1,background:'rgba(255,255,255,0.15)' }}/>}
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ flex:1,overflow:'auto',padding:'4px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',display:'flex',flexDirection:'column',gap:12 }}>
+        {entries.map(e=>{
+          const type=CREATURE_TYPES[e.typeKey], animal=CREATURE_ANIMALS[e.animalKey];
+          const complete=e.daysReached>=30, broken=!e.current&&!complete;
+          const variantKey=e.variantKey||'a';
+          return (
+            <div key={e.id} style={{ background:'#fff',border:e.current?`2px solid ${type.color}`:'1px solid #EFEDE3',borderRadius:18,padding:16,position:'relative' }}>
+              {/* Header */}
+              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14 }}>
+                <div>
+                  <div style={{ fontSize:10,color:'#BBB',letterSpacing:1,fontWeight:600,marginBottom:2 }}>#{String(e.id).padStart(3,'0')}</div>
+                  <div style={{ fontSize:16,fontWeight:700,letterSpacing:-0.3,color:broken?'#888':'#111' }}>{animal.name} <span style={{ color:type.color }}>·</span> {type.name}</div>
+                  <div style={{ fontSize:11,color:'#AAA',marginTop:2 }}>{VARIANT_LABEL[variantKey]} · {e.reason}</div>
+                </div>
+                {e.current
+                  ? <div style={{ fontSize:9,letterSpacing:1.5,fontWeight:700,background:type.color,color:'#fff',padding:'4px 8px',borderRadius:999 }}>ACTUAL</div>
+                  : complete
+                  ? <div style={{ fontSize:9,letterSpacing:1.5,fontWeight:700,background:'#111',color:'#fff',padding:'4px 8px',borderRadius:999 }}>COMPLETA</div>
+                  : <div style={{ fontSize:9,letterSpacing:1.5,fontWeight:700,background:'#F0EDE3',color:'#999',padding:'4px 8px',borderRadius:999 }}>FALLIDA</div>
+                }
+              </div>
+              {/* 4 evolution slots */}
+              <div style={{ display:'flex',gap:8 }}>
+                {[0,1,2,3].map(s=>{
+                  const unlocked = e.daysReached >= STAGE_THRESHOLDS[s] && (s===0 ? e.daysReached > 0 : e.daysReached >= STAGE_THRESHOLDS[s]);
+                  const isCurrentStage = s === creatureStageFor(e.daysReached) && e.current;
+                  const slotBg = unlocked ? (broken ? '#F5F3EC' : type.soft) : '#F0EEE6';
+                  return (
+                    <div key={s} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5 }}>
+                      <div style={{ width:'100%',height:78,borderRadius:12,background:slotBg,display:'flex',alignItems:'center',justifyContent:'center',border:isCurrentStage?`2px solid ${type.color}`:'2px solid transparent',position:'relative' }}>
+                        {unlocked
+                          ? <Creature stage={s} size={60} type={type} animal={animal} typeKey={e.typeKey} animalKey={e.animalKey} variantKey={variantKey} bounce={isCurrentStage} mono={broken}/>
+                          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        }
+                      </div>
+                      <div style={{ fontSize:9,fontWeight:600,letterSpacing:0.5,color:unlocked?(broken?'#AAA':type.color):'#CCC',textAlign:'center' }}>{STAGE_NAMES[s]}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Footer */}
+              <div style={{ marginTop:12,fontSize:11,color:'#BBB',display:'flex',justifyContent:'space-between' }}>
+                <span>Días alcanzados: <b style={{ color:'#888' }}>{e.daysReached}/30</b></span>
+                <span>{e.startedAt} {e.endedAt && e.endedAt!=='—' ? `→ ${e.endedAt}`:''}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+function GoalTile({ goal, onToggle, onPomodoro, type }) {
+  const Icon = goal.icon;
+  return (
+    <div onClick={onToggle} style={{ display:'flex',alignItems:'center',gap:14,background:goal.done?'#111':'#fff',border:goal.done?'1px solid #111':'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',cursor:'pointer',transition:'all 0.25s ease' }}>
+      <div style={{ width:36,height:36,borderRadius:10,background:goal.done?'rgba(255,255,255,0.1)':(type?type.soft:'#F5F3EC'),display:'flex',alignItems:'center',justifyContent:'center',color:goal.done?'#fff':'#111' }}><Icon size={20} weight={2}/></div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:16,fontWeight:600,color:goal.done?'#fff':'#111',letterSpacing:-0.2 }}>{goal.name}</div>
+        <div style={{ fontSize:12,color:goal.done?'rgba(255,255,255,0.5)':'#999',marginTop:1 }}>{goal.done?`Hecho · ${goal.streak} días seguidos`:`Racha ${goal.streak}`}</div>
+      </div>
+      {onPomodoro && !goal.done && (
+        <button onClick={e=>{e.stopPropagation();onPomodoro();}} style={{ width:32,height:32,borderRadius:8,border:'1px solid #EFEDE3',background:'transparent',color:'#666',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}><IconTimer size={16} weight={1.8}/></button>
+      )}
+      <div style={{ width:28,height:28,borderRadius:999,border:goal.done?'none':'2px solid #DDD8C8',background:goal.done?'#fff':'transparent',display:'flex',alignItems:'center',justifyContent:'center' }}>{goal.done&&<IconCheck size={16} color="#111" weight={3}/>}</div>
+    </div>
+  );
+}
+
+function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPokedex, onOpenSettings, onClearJustEvolved }) {
+  const { goals, streak, totalDays, failedDays=0, note, type, animal, typeKey, animalKey, variantKey, justEvolved=false } = data;
+  const completed = goals.filter(g=>g.done).length, pct = completed/goals.length, stage = creatureStageFor(totalDays), nextAt = STAGE_NEXT[stage];
+  const now = new Date();
+  const dayName = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][now.getDay()];
+  const dateStr = `${now.getDate()} ${'enero,febrero,marzo,abril,mayo,junio,julio,agosto,septiembre,octubre,noviembre,diciembre'.split(',')[now.getMonth()]}`;
+  const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
+  const VARIANT_COLOR = { a:'#B8860B', b:'#C0392B', c:'#7B2FBE' };
+  const VARIANT_SOFT  = { a:'#FFF8DC', b:'#FDEDEC', c:'#F5EEFF' };
+  const variantIcon = variantKey === 'a'
+    ? <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" fill={VARIANT_COLOR[variantKey]} stroke="none"/>
+    : variantKey === 'b'
+    ? <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill={VARIANT_COLOR[variantKey]} stroke="none"/>
+    : <path d="M12 3c1 2 2 4 1 6 2-1 4-1 5 1-2 0-4 1-4 3 1 2 1 4-1 5-1-2-1-4-3-4-2 0-3 2-4 1 1-2 2-4 0-5 2 0 3-2 3-4-1-2 0-4 3-3z" fill={VARIANT_COLOR[variantKey]} stroke="none"/>;
+
+  // ── Animations ──
+  const [celebrating, setCelebrating]     = React.useState(false);
+  const [evolving, setEvolving]           = React.useState(false);
+  const [shakingHearts, setShakingHearts] = React.useState(false);
+  const [previewStage, setPreviewStage]   = React.useState(null);
+  const prevCompleted   = React.useRef(completed);
+  const prevFailedDays  = React.useRef(null);
+
+  const displayStage = previewStage !== null ? previewStage : stage;
+
+  React.useEffect(() => {
+    if (completed === goals.length && prevCompleted.current < goals.length) {
+      setCelebrating(true);
+      setTimeout(() => setCelebrating(false), 3200);
+      if (creatureStageFor(totalDays + 1) > creatureStageFor(totalDays)) {
+        setTimeout(() => {
+          setEvolving(true);
+          setTimeout(() => setEvolving(false), 1800);
+        }, 600);
+        // Cambiar imagen en el pico del brillo (~1.3s total)
+        setTimeout(() => setPreviewStage(stage + 1), 1300);
+      }
+    }
+    if (completed < goals.length && previewStage !== null) setPreviewStage(null);
+    prevCompleted.current = completed;
+  }, [completed]);
+
+  React.useEffect(() => {
+    if (prevFailedDays.current !== null && failedDays > prevFailedDays.current) {
+      setShakingHearts(true);
+      setTimeout(() => setShakingHearts(false), 900);
+    }
+    prevFailedDays.current = failedDays;
+  }, [failedDays]);
+
+  // Shake on mount if already has failed days
+  React.useEffect(() => {
+    if (failedDays > 0) { setShakingHearts(true); setTimeout(() => setShakingHearts(false), 900); }
+  }, []);
+
+  const particles = React.useMemo(() => Array.from({length: 22}, (_, i) => ({
+    id: i,
+    left: 15 + Math.random() * 70,
+    delay: Math.random() * 0.7,
+    duration: 1.4 + Math.random() * 0.9,
+    color: ['#FFD700','#FFFFFF','#1F6FD9','#FFE54C','#BFDFFF','#FFC200','#4A90D9'][i % 7],
+    size: 7 + Math.round(Math.random() * 7),
+    circle: i % 3 !== 0,
+  })), []);
+
+  return (
+    <div style={{ height:'100%',background:'#FAFAF7',display:'flex',flexDirection:'column',fontFamily:'-apple-system,system-ui',overflow:'auto',position:'relative' }}>
+      <style>{`
+        @keyframes confetti {
+          0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+          100% { transform: translateY(-85vh) rotate(540deg) scale(0.4); opacity: 0; }
+        }
+        @keyframes evolutionPulse {
+          0%   { filter: none; transform: scale(1); }
+          20%  { filter: drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 36px #FFD700); transform: scale(1.13) rotate(-3deg); }
+          40%  { filter: drop-shadow(0 0 28px #FFD700); transform: scale(1.08) rotate(3deg); }
+          60%  { filter: drop-shadow(0 0 22px #FFD700); transform: scale(1.11) rotate(-2deg); }
+          80%  { filter: drop-shadow(0 0 10px #FFD700); transform: scale(1.04); }
+          100% { filter: none; transform: scale(1); }
+        }
+        @keyframes heartShake {
+          0%,100% { transform: translateX(0) rotate(0deg); }
+          15%  { transform: translateX(-5px) rotate(-10deg); }
+          35%  { transform: translateX(5px)  rotate(10deg);  }
+          55%  { transform: translateX(-3px) rotate(-6deg);  }
+          75%  { transform: translateX(3px)  rotate(6deg);   }
+        }
+      `}</style>
+      {celebrating && (
+        <div style={{ position:'absolute',inset:0,pointerEvents:'none',zIndex:30,overflow:'hidden' }}>
+          {particles.map(p=>(
+            <div key={p.id} style={{ position:'absolute', left:`${p.left}%`, top:'45%', width:p.size, height:p.circle?p.size:p.size*0.6, borderRadius:p.circle?'50%':'3px', background:p.color, animation:`confetti ${p.duration}s ${p.delay}s ease-out forwards` }}/>
+          ))}
+        </div>
+      )}
+      {/* Top bar */}
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'calc(env(safe-area-inset-top,44px) + 18px) 20px 0' }}>
+        <div>
+          <div style={{ fontSize:12,color:'#999',letterSpacing:1.5,textTransform:'uppercase',fontWeight:600 }}>{dayName}</div>
+          <div style={{ fontSize:22,color:'#111',fontWeight:600,letterSpacing:-0.4,marginTop:2 }}>{dateStr}</div>
+        </div>
+        <div style={{ display:'flex',gap:8 }}>
+          <button onClick={onOpenPokedex} style={{ height:36,padding:'0 12px',display:'flex',alignItems:'center',gap:5,background:'#fff',color:'#111',border:'1px solid #EFEDE3',borderRadius:999,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="2"/><path d="M3 13h18"/></svg>
+            Criaturas
+          </button>
+          <button onClick={onOpenSettings} style={{ width:36,height:36,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}><IconGear size={16} color="#666"/></button>
+        </div>
+      </div>
+      {/* Stats strip */}
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 20px 0' }}>
+        <div style={{ display:'flex',alignItems:'center',gap:6,background:VARIANT_SOFT[variantKey],padding:'6px 12px',borderRadius:999 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24">{variantIcon}</svg>
+          <span style={{ fontSize:12,fontWeight:700,color:VARIANT_COLOR[variantKey],letterSpacing:0.3 }}>{VARIANT_LABEL[variantKey]}</span>
+        </div>
+        <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:3, animation: shakingHearts ? 'heartShake 0.9s ease' : 'none' }}>
+            {[0,1,2].map(i=>(
+              <svg key={i} width="14" height="14" viewBox="0 0 24 24" fill={i>=failedDays?'#D94A1F':'none'} stroke={i>=failedDays?'#D94A1F':'#CCC'} strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            ))}
+          </div>
+          <div style={{ display:'flex',alignItems:'center',gap:5,background:'#111',color:'#fff',padding:'0 12px',height:32,borderRadius:999 }}><IconFlame size={12} color="#fff" weight={2.2}/><span style={{ fontSize:12,fontWeight:600 }}>{streak}</span></div>
+        </div>
+      </div>
+      <div style={{ display:'flex',justifyContent:'center',marginTop:22,position:'relative' }}>
+        <svg width={260} height={260} viewBox="0 0 260 260">
+          <circle cx="130" cy="130" r="116" fill="none" stroke="#ECEAE2" strokeWidth="10"/>
+          <circle cx="130" cy="130" r="116" fill="none" stroke={type.color} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${2*Math.PI*116}`} strokeDashoffset={`${2*Math.PI*116*(1-pct)}`} transform="rotate(-90 130 130)" style={{ transition:'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)' }}/>
+          {goals.map((g,i)=>{ const angle=(i/goals.length)*2*Math.PI-Math.PI/2, x=130+Math.cos(angle)*116, y=130+Math.sin(angle)*116; return <circle key={g.id} cx={x} cy={y} r="5" fill={g.done?type.color:'#FAFAF7'} stroke={type.color} strokeWidth="2"/>; })}
+        </svg>
+        <div style={{ position:'absolute',top:0,left:0,right:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
+          <div style={{ animation: evolving ? 'evolutionPulse 1.8s ease forwards' : 'none' }}>
+            <Creature stage={displayStage} size={140} type={type} animal={animal} typeKey={typeKey} animalKey={animalKey} variantKey={variantKey}/>
+          </div>
+        </div>
+      </div>
+      <div style={{ textAlign:'center',fontSize:10,color:'#999',letterSpacing:1.5,fontWeight:600,textTransform:'uppercase',marginTop:6 }}>{STAGE_NAMES[stage]} · día {totalDays}/30</div>
+      <div style={{ textAlign:'center',marginTop:6 }}>
+        <div style={{ fontSize:36,fontWeight:700,color:'#111',letterSpacing:-1 }}>{completed}<span style={{ color:'#C8C4B7' }}>/{goals.length}</span></div>
+        <div style={{ fontSize:13,color:'#999',marginTop:-4 }}>{completed===goals.length?'¡Día perfecto!':nextAt?`evoluciona en ${nextAt-totalDays} días`:'forma final alcanzada'}</div>
+      </div>
+      <div style={{ padding:'18px 20px 10px',display:'flex',flexDirection:'column',gap:8 }}>
+        {goals.map(g=><GoalTile key={g.id} goal={g} type={type} onToggle={()=>onToggle(g.id)} onPomodoro={g.id==='meditate'?()=>onOpenPomodoro(g):null}/>)}
+      </div>
+      <div style={{ marginTop:'auto',padding:'6px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',display:'flex',gap:10 }}>
+        <button onClick={onOpenNote} style={{ flex:1,background:'none',border:'1px solid #E5E2D8',borderRadius:14,padding:'14px',display:'flex',alignItems:'center',gap:10,color:'#111',fontSize:14,fontWeight:500,fontFamily:'inherit',cursor:'pointer' }}>
+          <IconNote size={18} weight={1.8}/>
+          <span style={{ color:note?'#111':'#999' }}>{note?'Hoy: '+note.slice(0,18)+(note.length>18?'…':''):'Nota del día'}</span>
+        </button>
+        <button onClick={()=>onOpenPomodoro(null)} style={{ width:52,height:52,background:'#111',border:'none',borderRadius:14,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}><IconTimer size={22} color="#fff" weight={2}/></button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+const AUTH_ERRORS = {
+  'auth/user-not-found':       'No existe una cuenta con ese email.',
+  'auth/wrong-password':       'Contraseña incorrecta.',
+  'auth/email-already-in-use': 'Ya existe una cuenta con ese email.',
+  'auth/weak-password':        'La contraseña debe tener al menos 6 caracteres.',
+  'auth/invalid-email':        'El email no es válido.',
+  'auth/too-many-requests':    'Demasiados intentos. Espera un momento.',
+  'auth/invalid-credential':   'Email o contraseña incorrectos.',
+};
+
+function LoginScreen() {
+  const [mode, setMode]         = React.useState('login');
+  const [email, setEmail]       = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loading, setLoading]   = React.useState(false);
+  const [error, setError]       = React.useState('');
+
+  const handleEmail = async () => {
+    if (!email || !password) { setError('Completa todos los campos.'); return; }
+    setLoading(true); setError('');
+    try {
+      if (mode === 'login') {
+        await auth.signInWithEmailAndPassword(email, password);
+      } else {
+        await auth.createUserWithEmailAndPassword(email, password);
+      }
+    } catch (err) {
+      setError(AUTH_ERRORS[err.code] || 'Algo salió mal. Intenta de nuevo.');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true); setError('');
+    try {
+      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    } catch (err) {
+      setError('No se pudo iniciar sesión con Google.');
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = { width:'100%', padding:'14px 16px', border:'1.5px solid #E5E2D8', borderRadius:12, fontSize:15, fontFamily:'inherit', color:'#111', background:'#fff', outline:'none', boxSizing:'border-box' };
+
+  return (
+    <div style={{ height:'100%',background:'#FAFAF7',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px 28px',fontFamily:'-apple-system,system-ui',overflow:'auto' }}>
+      <img src="https://storage.googleapis.com/pokegoal-app.firebasestorage.app/ui/onboarding_2.png" style={{ width:'100%', maxHeight:320, objectFit:'contain', objectPosition:'center' }}/>
+      <div style={{ fontSize:14,color:'#666',marginTop:0,textAlign:'center',lineHeight:1.6 }}>
+        Evoluciona tu criatura<br/>completando metas cada día.
+      </div>
+
+      <div style={{ width:'100%',marginTop:12,display:'flex',flexDirection:'column',gap:10 }}>
+        <input
+          type="email" placeholder="Email" value={email}
+          onChange={e=>{setEmail(e.target.value);setError('');}}
+          style={inputStyle}
+        />
+        <input
+          type="password" placeholder="Contraseña" value={password}
+          onChange={e=>{setPassword(e.target.value);setError('');}}
+          onKeyDown={e=>e.key==='Enter'&&handleEmail()}
+          style={inputStyle}
+        />
+        {error && <div style={{ fontSize:13,color:'#D94A1F',textAlign:'center',marginTop:2 }}>{error}</div>}
+        <button onClick={handleEmail} disabled={loading} style={{ width:'100%',padding:'15px',background:'#111',border:'none',borderRadius:12,fontSize:15,fontWeight:600,color:'#fff',cursor:'pointer',fontFamily:'inherit',opacity:loading?0.6:1,transition:'opacity 0.2s',marginTop:4 }}>
+          {loading ? 'Entrando…' : mode==='login' ? 'Entrar' : 'Crear cuenta'}
+        </button>
+        <div style={{ textAlign:'center',marginTop:4 }}>
+          <span style={{ fontSize:13,color:'#999' }}>{mode==='login'?'¿No tienes cuenta?':'¿Ya tienes cuenta?'} </span>
+          <button onClick={()=>{setMode(m=>m==='login'?'register':'login');setError('');}} style={{ fontSize:13,fontWeight:600,color:'#111',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textDecoration:'underline' }}>
+            {mode==='login'?'Crear cuenta':'Inicia sesión'}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ width:'100%',display:'flex',alignItems:'center',gap:12,margin:'20px 0' }}>
+        <div style={{ flex:1,height:1,background:'#E5E2D8' }}/>
+        <span style={{ fontSize:12,color:'#bbb',fontWeight:500 }}>o</span>
+        <div style={{ flex:1,height:1,background:'#E5E2D8' }}/>
+      </div>
+
+      <button onClick={handleGoogle} disabled={loading} style={{ width:'100%',padding:'14px',background:'#fff',border:'1.5px solid #E5E2D8',borderRadius:12,fontSize:14,fontWeight:600,color:'#111',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,fontFamily:'inherit',opacity:loading?0.6:1 }}>
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar con Google
+      </button>
+
+      <div style={{ marginTop:20,fontSize:11,color:'#bbb',textAlign:'center',lineHeight:1.5 }}>
+        Tus datos se guardan en la nube<br/>y se sincronizan entre dispositivos.
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOADING SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+function LoadingScreen() {
+  return (
+    <div style={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:'#FAFAF7' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{ width:28,height:28,borderRadius:999,border:'2.5px solid #E5E2D8',borderTopColor:'#111',animation:'spin 0.8s linear infinite' }}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PERSISTENCE HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+const ICON_MAP = { dumbbell:IconDumbbell, lotus:IconLotus, book:IconBook, run:IconRun, water:IconWater, brain:IconBrain, heart:IconHeartGoal, moon:IconMoon, pencil:IconPencil };
+
+const DEFAULT_GOALS_RAW = [
+  { id:'exercise', name:'Hacer ejercicio', iconName:'dumbbell', done:false, streak:0 },
+  { id:'meditate', name:'Meditar',         iconName:'lotus',    done:false, streak:0 },
+  { id:'read',     name:'Leer',            iconName:'book',     done:false, streak:0 },
+];
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function hydrateGoals(goals) { return goals.map(g=>({...g, icon: ICON_MAP[g.iconName]||IconBook})); }
+function dehydrateGoals(goals) { return goals.map(({icon,...rest})=>rest); }
+
+function defaultAppState() {
+  return { hasOnboarded:false, typeKey:'psychic', animalKey:'cat', variantKey:'a', goals:DEFAULT_GOALS_RAW, streak:0, totalDays:0, failedDays:0, lastDate:todayStr(), note:'', startedAt:todayStr(), pokedexHistory:[] };
+}
+
+function migrateState(state) {
+  const animalMap = { frog: 'amphibian', rodent: 'cat' };
+  const migrateAnimal = k => animalMap[k] || k;
+  return {
+    ...state,
+    animalKey: migrateAnimal(state.animalKey),
+    variantKey: state.variantKey || 'a',
+    failedDays: state.failedDays || 0,
+    pokedexHistory: (state.pokedexHistory || []).map(e => ({
+      ...e,
+      animalKey: migrateAnimal(e.animalKey),
+      variantKey: e.variantKey || 'a',
+    })),
+  };
+}
+
+const MAX_FAILED_DAYS = 3;
+
+function rolloverIfNeeded(state) {
+  const today = todayStr();
+  if (state.lastDate === today) return state;
+  const allDone = state.goals.every(g=>g.done);
+  let { streak, totalDays, failedDays=0, pokedexHistory, typeKey, animalKey, variantKey, startedAt } = state;
+  let newStartedAt = startedAt || today;
+  if (allDone) {
+    streak++; totalDays++;
+    if (totalDays >= 30) {
+      pokedexHistory = [...pokedexHistory, { id:Date.now(), typeKey, animalKey, variantKey, daysReached:30, startedAt:newStartedAt, endedAt:state.lastDate, reason:'completado ✓' }];
+      streak=0; totalDays=0; failedDays=0; newStartedAt=today;
+      variantKey = pickVariant(typeKey, animalKey, pokedexHistory);
+    }
+  } else {
+    streak = 0;
+    failedDays++;
+    if (failedDays >= MAX_FAILED_DAYS) {
+      pokedexHistory = [...pokedexHistory, { id:Date.now(), typeKey, animalKey, variantKey, daysReached:totalDays, startedAt:newStartedAt, endedAt:state.lastDate, reason:'3 días fallados 💀' }];
+      totalDays=0; failedDays=0; newStartedAt=today;
+      variantKey = pickVariant(typeKey, animalKey, pokedexHistory);
+    }
+  }
+  const prevStageVal = creatureStageFor(state.totalDays);
+  const nextStageVal = creatureStageFor(totalDays);
+  const justEvolved  = nextStageVal > prevStageVal && totalDays > 0;
+  return { ...state, streak, totalDays, failedDays, variantKey, lastDate:today, goals:DEFAULT_GOALS_RAW, note:'', startedAt:newStartedAt, pokedexHistory, justEvolved };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS PANEL
+// ═══════════════════════════════════════════════════════════════
+
+const ICON_OPTIONS = [
+  { name:'dumbbell', Icon:IconDumbbell },
+  { name:'run',      Icon:IconRun      },
+  { name:'lotus',    Icon:IconLotus    },
+  { name:'heart',    Icon:IconHeartGoal},
+  { name:'water',    Icon:IconWater    },
+  { name:'brain',    Icon:IconBrain    },
+  { name:'book',     Icon:IconBook     },
+  { name:'pencil',   Icon:IconPencil   },
+  { name:'moon',     Icon:IconMoon     },
+];
+
+function SettingsPanel({ goals, totalDays, onClose, onSave }) {
+  const canEdit = totalDays === 0;
+  const [draft, setDraft]         = React.useState(() => goals.map(g => ({ id:g.id, name:g.name, iconName:g.iconName })));
+  const [activeIcon, setActiveIcon] = React.useState(null);
+
+  const updateGoal = (idx, patch) => setDraft(d => d.map((g,i) => i===idx ? {...g,...patch} : g));
+
+  return (
+    <div style={{ position:'absolute',inset:0,background:'#FAFAF7',zIndex:50,display:'flex',flexDirection:'column',fontFamily:'-apple-system,system-ui',color:'#111' }}>
+      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 16px',display:'flex',alignItems:'center',gap:14 }}>
+        <button onClick={onClose} style={{ width:40,height:40,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#111' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div style={{ fontSize:26,fontWeight:700,letterSpacing:-0.4 }}>Ajustes</div>
+      </div>
+
+      <div style={{ flex:1,overflow:'auto',padding:'4px 20px 20px' }}>
+        <div style={{ fontSize:11,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600,marginBottom:12 }}>Tus metas</div>
+
+        {!canEdit && (
+          <div style={{ background:'#FFFBEE',border:'1px solid #EFE0AA',borderRadius:14,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:10 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8860B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div style={{ fontSize:13,color:'#7A5C00',lineHeight:1.4 }}>Podrás editarlas al final del ciclo actual. ¡Sigue adelante!</div>
+          </div>
+        )}
+
+        {draft.map((goal, idx) => {
+          const Icon = ICON_MAP[goal.iconName] || IconBook;
+          const isOpen = activeIcon === idx;
+          return (
+            <div key={goal.id} style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',marginBottom:10,opacity:canEdit?1:0.55,transition:'opacity 0.2s' }}>
+              <div style={{ display:'flex',alignItems:'center',gap:12 }}>
+                <button onClick={()=>canEdit&&setActiveIcon(isOpen?null:idx)} disabled={!canEdit} style={{ width:42,height:42,borderRadius:12,background:'#F5F3EC',border:isOpen?'2px solid #111':'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:canEdit?'pointer':'default',flexShrink:0,transition:'border 0.15s' }}>
+                  <Icon size={20} color="#111"/>
+                </button>
+                <input
+                  value={goal.name}
+                  onChange={e=>updateGoal(idx,{name:e.target.value})}
+                  disabled={!canEdit}
+                  placeholder="Nombre de la meta"
+                  style={{ flex:1,fontSize:16,fontWeight:600,color:'#111',border:'none',background:'transparent',outline:'none',fontFamily:'inherit' }}
+                />
+              </div>
+              {canEdit && isOpen && (
+                <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid #F0EDE4' }}>
+                  {ICON_OPTIONS.map(opt=>(
+                    <button key={opt.name} onClick={()=>{updateGoal(idx,{iconName:opt.name});setActiveIcon(null);}} style={{ width:42,height:42,borderRadius:11,background:goal.iconName===opt.name?'#111':'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',transition:'background 0.15s' }}>
+                      <opt.Icon size={20} color={goal.iconName===opt.name?'#fff':'#555'}/>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {canEdit && (
+        <div style={{ padding:'12px 20px calc(env(safe-area-inset-bottom,0px) + 28px)' }}>
+          <button onClick={()=>{onSave(draft);onClose();}} style={{ width:'100%',padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',cursor:'pointer',fontFamily:'inherit' }}>
+            Guardar cambios
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════════════════════════
+
+function App() {
+  const [authLoading, setAuthLoading] = React.useState(true);
+  const [user, setUser]               = React.useState(null);
+  const [dataLoading, setDataLoading] = React.useState(false);
+  const [appState, setAppState]       = React.useState(null);
+  const [screen, setScreen]           = React.useState('home');
+  const [pomo, setPomo]               = React.useState(null);
+  const [noteOpen, setNoteOpen]       = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const saveTimer                     = React.useRef(null);
+  const isFirstLoad                   = React.useRef(true);
+
+  // Auth listener
+  React.useEffect(() => {
+    return auth.onAuthStateChanged(u => { setUser(u); setAuthLoading(false); });
+  }, []);
+
+  // Load data when user logs in
+  React.useEffect(() => {
+    if (!user) { setAppState(null); return; }
+    setDataLoading(true);
+    db.collection('users').doc(user.uid).collection('data').doc('state')
+      .get()
+      .then(doc => {
+        let raw = doc.exists ? rolloverIfNeeded(migrateState(doc.data())) : defaultAppState();
+        setAppState({ ...raw, goals: hydrateGoals(raw.goals) });
+        setScreen(raw.hasOnboarded ? 'home' : 'onboard');
+        isFirstLoad.current = false;
+      })
+      .catch(() => {
+        const raw = defaultAppState();
+        setAppState({ ...raw, goals: hydrateGoals(raw.goals) });
+        setScreen('onboard');
+        isFirstLoad.current = false;
+      })
+      .finally(() => setDataLoading(false));
+  }, [user]);
+
+  // Save to Firestore (debounced 800ms)
+  React.useEffect(() => {
+    if (!user || !appState || dataLoading) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      db.collection('users').doc(user.uid).collection('data').doc('state')
+        .set({ ...appState, goals: dehydrateGoals(appState.goals) })
+        .catch(() => {});
+    }, 800);
+  }, [appState]);
+
+  const update = patch => setAppState(s => ({...s, ...patch}));
+
+  const toggleGoal = id => setAppState(s => ({
+    ...s,
+    goals: s.goals.map(g => g.id===id ? {...g, done:!g.done, streak:g.done?g.streak-1:g.streak+1} : g),
+  }));
+
+  const handleSaveGoals = (draftGoals) => {
+    setAppState(s => ({
+      ...s,
+      goals: draftGoals.map(dg => {
+        const existing = s.goals.find(g => g.id === dg.id);
+        return { ...existing, name:dg.name, iconName:dg.iconName, icon: ICON_MAP[dg.iconName] || IconBook };
+      })
+    }));
+  };
+
+  const handleOnboardDone = ({typeKey, animalKey}) => {
+    const variantKey = pickVariant(typeKey, animalKey, []);
+    update({ hasOnboarded:true, typeKey, animalKey, variantKey, startedAt:todayStr() });
+    setScreen('home');
+  };
+
+  const pokedexEntries = React.useMemo(() => {
+    if (!appState) return [];
+    const history = appState.pokedexHistory.map((e,i)=>({...e, id:i+1}));
+    return [...history, { id:history.length+1, typeKey:appState.typeKey, animalKey:appState.animalKey, variantKey:appState.variantKey||'a', daysReached:appState.totalDays, startedAt:appState.startedAt||todayStr(), endedAt:'—', reason:'actual', current:true }];
+  }, [appState]);
+
+  // ── Render ──
+  if (authLoading) return <LoadingScreen/>;
+  if (!user) return <LoginScreen/>;
+  if (dataLoading || !appState) return <LoadingScreen/>;
+
+  const data = {
+    goals: appState.goals, note: appState.note, streak: appState.streak,
+    totalDays: appState.totalDays,
+    typeKey: appState.typeKey, animalKey: appState.animalKey, variantKey: appState.variantKey || 'a', failedDays: appState.failedDays || 0,
+    type: CREATURE_TYPES[appState.typeKey], animal: CREATURE_ANIMALS[appState.animalKey],
+    justEvolved: appState.justEvolved || false,
+  };
+
+  return (
+    <div style={{ position:'relative',width:'100%',height:'100%',overflow:'hidden' }}>
+      {screen==='onboard'  && <Onboarding onDone={handleOnboardDone}/>}
+      {screen==='home'     && <VariantSerenity data={data} onToggle={toggleGoal} onOpenPomodoro={g=>setPomo({goal:g})} onOpenNote={()=>setNoteOpen(true)} onOpenPokedex={()=>setScreen('pokedex')} onOpenSettings={()=>setSettingsOpen(true)} onClearJustEvolved={()=>update({justEvolved:false})}/>}
+      {settingsOpen && <SettingsPanel goals={appState.goals} totalDays={appState.totalDays} onClose={()=>setSettingsOpen(false)} onSave={handleSaveGoals}/>}
+      {screen==='pokedex'  && <Pokedex entries={pokedexEntries} onBack={()=>setScreen('home')}/>}
+      <PomodoroModal open={!!pomo} goalName={pomo?.goal?.name} durationMin={pomo?.goal?.id==='meditate'?10:25} onClose={()=>setPomo(null)}/>
+      <NoteModal open={noteOpen} initial={appState.note} onClose={()=>setNoteOpen(false)} onSave={note=>update({note})}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
