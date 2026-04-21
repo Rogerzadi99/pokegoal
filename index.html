@@ -459,6 +459,41 @@ function Onboarding({ onDone, pokedexHistory = [] }) {
 const STAGE_THRESHOLDS = [0, 10, 20, 30];
 
 const ANIMAL_ORDER  = ['cat','dragon','bird','amphibian','bear'];
+
+const CREATURE_NAMES = {
+  cat_fire_a:'Igniferon',     cat_fire_b:'Igniferax',     cat_fire_c:'Igniferys',
+  cat_water_a:'Aquaferon',    cat_water_b:'Aquaferax',    cat_water_c:'Aquaferys',
+  cat_psychic_a:'Auraferon',  cat_psychic_b:'Auraferax',  cat_psychic_c:'Auraferys',
+  cat_grass_a:'Sylvaferon',   cat_grass_b:'Sylvaferax',   cat_grass_c:'Sylvaferys',
+  cat_electric_a:'Voltaferon',cat_electric_b:'Voltaferax',cat_electric_c:'Voltaferys',
+
+  dragon_fire_a:'Ignidrakon',    dragon_fire_b:'Ignidrax',    dragon_fire_c:'Ignidrakys',
+  dragon_water_a:'Aquadrakon',   dragon_water_b:'Aquadrax',   dragon_water_c:'Aquadrakys',
+  dragon_psychic_a:'Auradrakon', dragon_psychic_b:'Auradrax', dragon_psychic_c:'Auradrakys',
+  dragon_grass_a:'Sylvadrakon',  dragon_grass_b:'Sylvadrax',  dragon_grass_c:'Sylvadrakys',
+  dragon_electric_a:'Voltadrakon',dragon_electric_b:'Voltadrax',dragon_electric_c:'Voltadrakys',
+
+  bird_fire_a:'Ignivion',    bird_fire_b:'Igniavax',    bird_fire_c:'Igniavys',
+  bird_water_a:'Aquavion',   bird_water_b:'Aquavax',    bird_water_c:'Aquavys',
+  bird_psychic_a:'Auravion', bird_psychic_b:'Auravax',  bird_psychic_c:'Auravys',
+  bird_grass_a:'Sylvavion',  bird_grass_b:'Sylvavax',   bird_grass_c:'Sylvavys',
+  bird_electric_a:'Voltavion',bird_electric_b:'Voltavax',bird_electric_c:'Voltavys',
+
+  amphibian_fire_a:'Ignikerion',    amphibian_fire_b:'Ignikerax',    amphibian_fire_c:'Ignikerys',
+  amphibian_water_a:'Aquakerion',   amphibian_water_b:'Aquakerax',   amphibian_water_c:'Aquakerys',
+  amphibian_psychic_a:'Aurakerion', amphibian_psychic_b:'Aurakerax', amphibian_psychic_c:'Aurakerys',
+  amphibian_grass_a:'Sylvakerion',  amphibian_grass_b:'Sylvakerax',  amphibian_grass_c:'Sylvakerys',
+  amphibian_electric_a:'Voltakerion',amphibian_electric_b:'Voltakerax',amphibian_electric_c:'Voltakerys',
+
+  bear_fire_a:'Igniurson',    bear_fire_b:'Igniursax',    bear_fire_c:'Igniursys',
+  bear_water_a:'Aquaurson',   bear_water_b:'Aquaursax',   bear_water_c:'Aquaursys',
+  bear_psychic_a:'Auraurson', bear_psychic_b:'Auraursax', bear_psychic_c:'Auraursys',
+  bear_grass_a:'Sylvaurson',  bear_grass_b:'Sylvaursax',  bear_grass_c:'Sylvaursys',
+  bear_electric_a:'Voltaurson',bear_electric_b:'Voltaursax',bear_electric_c:'Voltaursys',
+};
+function getCreatureName(animalKey, typeKey, variantKey) {
+  return CREATURE_NAMES[`${animalKey}_${typeKey}_${variantKey}`] || `${animalKey} ${typeKey}`;
+}
 const TYPE_ORDER    = ['fire','water','psychic','grass','electric'];
 const VARIANT_ORDER = ['a','b','c'];
 function creatureNumber(animalKey, typeKey, variantKey) {
@@ -496,8 +531,8 @@ function CelebrationScreen({ creature, onContinue }) {
           </div>
         </div>
         <div style={{ fontSize:11, letterSpacing:2, textTransform:'uppercase', color:type.color, fontWeight:700, marginBottom:6 }}>¡Ciclo completado!</div>
-        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.8, textAlign:'center', lineHeight:1.2 }}>{animal.name} · {type.name}</div>
-        <div style={{ fontSize:13, color:'#999', marginTop:4 }}>{VARIANT_LABEL[vKey]} · Fase Final · 30 días</div>
+        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.8, textAlign:'center', lineHeight:1.2 }}>{getCreatureName(creature.animalKey, creature.typeKey, vKey)}</div>
+        <div style={{ fontSize:13, color:'#999', marginTop:4 }}>{animal.name} · {type.name} · {VARIANT_LABEL[vKey]} · 30 días</div>
       </div>
 
       {/* Gráfica de contribuciones */}
@@ -583,8 +618,9 @@ function Pokedex({ entries=[], onBack }) {
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14 }}>
                 <div>
                   <div style={{ fontSize:10,color:'#BBB',letterSpacing:1,fontWeight:600,marginBottom:2 }}>#{String(creatureNumber(e.animalKey,e.typeKey,e.variantKey)).padStart(3,'0')}</div>
-                  <div style={{ fontSize:16,fontWeight:700,letterSpacing:-0.3,color:broken?'#888':'#111' }}>{animal.name} <span style={{ color:type.color }}>·</span> {type.name}</div>
-                  <div style={{ fontSize:11,color:'#AAA',marginTop:2 }}>{VARIANT_LABEL[variantKey]} · {e.reason}</div>
+                  <div style={{ fontSize:17,fontWeight:800,letterSpacing:-0.4,color:broken?'#888':'#111' }}>{getCreatureName(e.animalKey,e.typeKey,variantKey)}</div>
+                  <div style={{ fontSize:11,color:'#AAA',marginTop:1 }}>{animal.name} · {type.name} · {VARIANT_LABEL[variantKey]}</div>
+                  <div style={{ fontSize:10,color:'#CCC',marginTop:1 }}>{e.reason}</div>
                 </div>
                 {e.current
                   ? <div style={{ fontSize:9,letterSpacing:1.5,fontWeight:700,background:type.color,color:'#fff',padding:'4px 8px',borderRadius:999 }}>ACTUAL</div>
@@ -875,9 +911,9 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
         </div>
         {/* Creature info tooltip */}
         {showCreatureInfo && (
-          <div onClick={()=>setShowCreatureInfo(false)} style={{ position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'rgba(17,17,17,0.92)',color:'#fff',borderRadius:16,padding:'12px 18px',textAlign:'center',backdropFilter:'blur(8px)',pointerEvents:'auto',animation:'milestoneIn 0.2s ease',minWidth:160 }}>
-            <div style={{ fontSize:14,fontWeight:700 }}>{animal.name} {type.name}</div>
-            <div style={{ fontSize:11,color:'rgba(255,255,255,0.6)',marginTop:2 }}>{VARIANT_LABEL[variantKey]} · {STAGE_NAMES[stage]}</div>
+          <div onClick={()=>setShowCreatureInfo(false)} style={{ position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'rgba(17,17,17,0.92)',color:'#fff',borderRadius:16,padding:'12px 20px',textAlign:'center',backdropFilter:'blur(8px)',pointerEvents:'auto',animation:'milestoneIn 0.2s ease',minWidth:170 }}>
+            <div style={{ fontSize:16,fontWeight:800,letterSpacing:-0.3 }}>{getCreatureName(animalKey,typeKey,variantKey)}</div>
+            <div style={{ fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2 }}>{animal.name} · {type.name} · {VARIANT_LABEL[variantKey]}</div>
             <div style={{ fontSize:11,color:type.color,marginTop:6,fontWeight:600 }}>
               {stage < 3 ? `${nextAt - totalDays} días para evolucionar` : '¡Forma final alcanzada!'}
             </div>
