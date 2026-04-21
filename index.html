@@ -638,6 +638,7 @@ function GoalTile({ goal, onToggle, onPomodoro, type }) {
     if (goal.done && !prevDone.current) {
       setBouncing(true);
       setTimeout(() => setBouncing(false), 400);
+      if (navigator.vibrate) navigator.vibrate(12);
     }
     prevDone.current = goal.done;
   }, [goal.done]);
@@ -659,7 +660,7 @@ function GoalTile({ goal, onToggle, onPomodoro, type }) {
 }
 
 function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPokedex, onOpenSettings, onClearJustEvolved }) {
-  const { goals, streak, totalDays, failedDays=0, note, type, animal, typeKey, animalKey, variantKey, justEvolved=false, dailyLog=[], startedAt, cycleNumber=1 } = data;
+  const { goals, streak, bestStreak=0, totalDays, failedDays=0, note, type, animal, typeKey, animalKey, variantKey, justEvolved=false, dailyLog=[], startedAt, cycleNumber=1 } = data;
   const completed = goals.filter(g=>g.done).length, pct = completed/goals.length, stage = creatureStageFor(totalDays), nextAt = STAGE_NEXT[stage];
   const now = new Date();
   const dayName = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][now.getDay()];
@@ -852,9 +853,12 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
               </svg>
             ))}
           </div>
-          <div style={{ display:'flex',alignItems:'center',gap:5,background:MILESTONES.includes(streak)?'#D97706':'#111',color:'#fff',padding:'0 12px',height:32,borderRadius:999,transition:'background 0.3s' }}>
-            <IconFlame size={12} color="#fff" weight={2.2}/>
-            <span style={{ fontSize:12,fontWeight:600 }}>{streak}</span>
+          <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:1 }}>
+            <div style={{ display:'flex',alignItems:'center',gap:5,background:MILESTONES.includes(streak)?'#D97706':'#111',color:'#fff',padding:'0 12px',height:32,borderRadius:999,transition:'background 0.3s' }}>
+              <IconFlame size={12} color="#fff" weight={2.2}/>
+              <span style={{ fontSize:12,fontWeight:600 }}>{streak}</span>
+            </div>
+            {bestStreak > 0 && <div style={{ fontSize:9,color:'#BBB',fontWeight:600,letterSpacing:0.3 }}>récord {bestStreak}</div>}
           </div>
         </div>
       </div>
@@ -1045,7 +1049,7 @@ function hydrateGoals(goals) { return goals.map(g=>({...g, icon: ICON_MAP[g.icon
 function dehydrateGoals(goals) { return goals.map(({icon,...rest})=>rest); }
 
 function defaultAppState() {
-  return { hasOnboarded:false, typeKey:'psychic', animalKey:'cat', variantKey:'a', goals:DEFAULT_GOALS_RAW, streak:0, totalDays:0, failedDays:0, lastDate:todayStr(), note:'', startedAt:todayStr(), pokedexHistory:[], dailyLog:[], lastCreature:null };
+  return { hasOnboarded:false, typeKey:'psychic', animalKey:'cat', variantKey:'a', goals:DEFAULT_GOALS_RAW, streak:0, bestStreak:0, totalDays:0, failedDays:0, lastDate:todayStr(), note:'', startedAt:todayStr(), pokedexHistory:[], dailyLog:[], lastCreature:null };
 }
 
 function migrateState(state) {
@@ -1056,6 +1060,7 @@ function migrateState(state) {
     animalKey: migrateAnimal(state.animalKey),
     variantKey: state.variantKey || 'a',
     failedDays: state.failedDays || 0,
+    bestStreak: state.bestStreak || 0,
     dailyLog: state.dailyLog || [],
     lastCreature: state.lastCreature || null,
     pokedexHistory: (state.pokedexHistory || []).map(e => ({
@@ -1072,7 +1077,7 @@ function rolloverIfNeeded(state) {
   const today = todayStr();
   if (state.lastDate === today) return state;
   const allDone = state.goals.every(g=>g.done);
-  let { streak, totalDays, failedDays=0, pokedexHistory, typeKey, animalKey, variantKey, startedAt, dailyLog=[], goalLog={} } = state;
+  let { streak, bestStreak=0, totalDays, failedDays=0, pokedexHistory, typeKey, animalKey, variantKey, startedAt, dailyLog=[], goalLog={} } = state;
   let newStartedAt = startedAt || today;
   dailyLog = [...dailyLog, allDone];
   const newGoalLog = {};
@@ -1080,10 +1085,11 @@ function rolloverIfNeeded(state) {
   goalLog = newGoalLog;
   if (allDone) {
     streak++; totalDays++;
+    bestStreak = Math.max(bestStreak, streak);
     if (totalDays >= 30) {
       const lastCreature = { typeKey, animalKey, variantKey, dailyLog, goalLog, goalNames: state.goals.map(g=>({id:g.id,name:g.name})), startedAt:newStartedAt, endedAt:state.lastDate };
       pokedexHistory = [...pokedexHistory, { id:Date.now(), typeKey, animalKey, variantKey, daysReached:30, startedAt:newStartedAt, endedAt:state.lastDate, reason:'completado ✓' }];
-      return { ...state, streak:0, totalDays:0, failedDays:0, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:today, pokedexHistory, dailyLog:[], goalLog:{}, lastCreature, needsNewCreature:true, justEvolved:false };
+      return { ...state, streak:0, bestStreak, totalDays:0, failedDays:0, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:today, pokedexHistory, dailyLog:[], goalLog:{}, lastCreature, needsNewCreature:true, justEvolved:false };
     }
   } else {
     streak = 0;
@@ -1097,7 +1103,7 @@ function rolloverIfNeeded(state) {
   const prevStageVal = creatureStageFor(state.totalDays);
   const nextStageVal = creatureStageFor(totalDays);
   const justEvolved  = nextStageVal > prevStageVal && totalDays > 0;
-  return { ...state, streak, totalDays, failedDays, variantKey, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:newStartedAt, pokedexHistory, dailyLog, justEvolved };
+  return { ...state, streak, bestStreak, totalDays, failedDays, variantKey, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:newStartedAt, pokedexHistory, dailyLog, justEvolved };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1325,7 +1331,7 @@ function App() {
     type: CREATURE_TYPES[appState.typeKey], animal: CREATURE_ANIMALS[appState.animalKey],
     justEvolved: appState.justEvolved || false,
     dailyLog: appState.dailyLog || [], startedAt: appState.startedAt || todayStr(),
-    cycleNumber: (appState.pokedexHistory || []).length + 1,
+    cycleNumber: (appState.pokedexHistory || []).length + 1, bestStreak: appState.bestStreak || 0,
   };
 
   return (
