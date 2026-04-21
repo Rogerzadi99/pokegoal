@@ -291,16 +291,38 @@ function NoteModal({ open, initial, onClose, onSave }) {
 // ONBOARDING
 // ═══════════════════════════════════════════════════════════════
 
-function Onboarding({ onDone }) {
-  const [step, setStep] = React.useState(0);
-  const [typeKey, setTypeKey] = React.useState('fire');
+function Onboarding({ onDone, pokedexHistory = [] }) {
+  const [step, setStep]         = React.useState(0);
+  const [typeKey, setTypeKey]   = React.useState('fire');
   const [animalKey, setAnimalKey] = React.useState('cat');
+
+  const isComboFull = (tKey, aKey) => {
+    const used = pokedexHistory.filter(e => e.typeKey === tKey && e.animalKey === aKey).map(e => e.variantKey);
+    return ALL_VARIANTS.every(v => used.includes(v));
+  };
+  const [goalDraft, setGoalDraft] = React.useState(() => DEFAULT_GOALS_RAW.map(g => ({ id:g.id, name:'', iconName:g.iconName })));
+  const [activeIcon, setActiveIcon] = React.useState(null);
+  const [goalError, setGoalError]   = React.useState(false);
   const type = CREATURE_TYPES[typeKey], animal = CREATURE_ANIMALS[animalKey];
+  const TOTAL_STEPS = 5;
+
+  const updateGoal = (idx, patch) => { setGoalError(false); setGoalDraft(d => d.map((g,i) => i===idx ? {...g,...patch} : g)); };
+  const deleteGoal = (idx) => { setActiveIcon(null); setGoalDraft(d => d.filter((_,i) => i!==idx)); };
+
+  const handleNext = () => {
+    if (step === 3) {
+      const filled = goalDraft.filter(g => g.name.trim() !== '');
+      if (filled.length === 0) { setGoalError(true); return; }
+      setGoalDraft(filled);
+    }
+    setStep(s => s + 1);
+  };
+
   return (
     <div style={{ height:'100%',background:'#FAFAF7',fontFamily:'-apple-system,system-ui',color:'#111',display:'flex',flexDirection:'column' }}>
       <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-        <div style={{ fontSize:12,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Paso {step+1} de 4</div>
-        <div style={{ display:'flex',gap:4 }}>{[0,1,2,3].map(i=><div key={i} style={{ width:20,height:3,borderRadius:2,background:i<=step?'#111':'#E5E2D8' }}/>)}</div>
+        <div style={{ fontSize:12,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Paso {step+1} de {TOTAL_STEPS}</div>
+        <div style={{ display:'flex',gap:4 }}>{Array.from({length:TOTAL_STEPS},(_,i)=><div key={i} style={{ width:20,height:3,borderRadius:2,background:i<=step?'#111':'#E5E2D8' }}/>)}</div>
       </div>
       {step===0 && (
         <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 32px',textAlign:'center' }}>
@@ -344,17 +366,68 @@ function Onboarding({ onDone }) {
             <div style={{ fontSize:24, fontWeight:700, letterSpacing:-0.5 }}>Elige su tipo</div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-            {Object.entries(CREATURE_ANIMALS).map(([k,a])=>(
-              <button key={k} onClick={()=>setAnimalKey(k)} style={{ padding:'18px 12px 14px', border:animalKey===k?`2.5px solid ${type.color}`:'1.5px solid #EFEDE3', background:animalKey===k?type.soft:'#fff', borderRadius:20, cursor:'pointer', fontFamily:'inherit', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all 0.2s', position:'relative' }}>
-                {animalKey===k && <div style={{ position:'absolute', top:10, right:10, width:8, height:8, borderRadius:999, background:type.color }}/>}
-                <Creature stage={0} size={90} type={type} animal={a} typeKey={typeKey} animalKey={k} variantKey="a" bounce={animalKey===k}/>
-                <div style={{ fontSize:13, fontWeight:700, color:animalKey===k?'#111':'#555' }}>{a.name}</div>
-              </button>
-            ))}
+            {Object.entries(CREATURE_ANIMALS).map(([k,a])=>{
+              const full = isComboFull(typeKey, k);
+              return (
+                <button key={k} onClick={()=>{ if(!full) setAnimalKey(k); }} style={{ padding:'18px 12px 14px', border:animalKey===k?`2.5px solid ${type.color}`:'1.5px solid #EFEDE3', background:full?'#F5F5F5':animalKey===k?type.soft:'#fff', borderRadius:20, cursor:full?'default':'pointer', fontFamily:'inherit', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all 0.2s', position:'relative', opacity:full?0.6:1 }}>
+                  {!full && animalKey===k && <div style={{ position:'absolute', top:10, right:10, width:8, height:8, borderRadius:999, background:type.color }}/>}
+                  {full && <div style={{ position:'absolute', top:8, right:8, background:'#888', color:'#fff', fontSize:9, fontWeight:700, letterSpacing:0.5, borderRadius:6, padding:'2px 6px', textTransform:'uppercase' }}>Completado</div>}
+                  <div style={{ filter: full ? 'grayscale(1)' : 'none', transition:'filter 0.2s' }}>
+                    <Creature stage={0} size={90} type={type} animal={a} typeKey={typeKey} animalKey={k} variantKey="a" bounce={!full && animalKey===k}/>
+                  </div>
+                  <div style={{ fontSize:13, fontWeight:700, color:full?'#AAA':animalKey===k?'#111':'#555' }}>{a.name}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
       {step===3 && (
+        <div style={{ flex:1,overflow:'auto',padding:'4px 20px 20px' }}>
+          <div style={{ padding:'4px 4px 14px' }}>
+            <div style={{ fontSize:24,fontWeight:700,letterSpacing:-0.5 }}>Define tus metas</div>
+            <div style={{ fontSize:14,color:'#999',marginTop:4 }}>Lo que harás cada día. Puedes tener de 1 a 3.</div>
+            <div style={{ display:'flex',alignItems:'flex-start',gap:6,marginTop:10,background:'#FFF8EC',border:'1px solid #FFE4A0',borderRadius:10,padding:'10px 12px' }}>
+              <span style={{ fontSize:15,lineHeight:1 }}>⚠️</span>
+              <span style={{ fontSize:12,color:'#A06800',lineHeight:1.5 }}>Solo puedes editar tus metas el primer día. Al avanzar, quedarán congeladas hasta que termine el ciclo de 30 días.</span>
+            </div>
+          </div>
+          {goalError && (
+            <div style={{ background:'#FFF3F0',border:'1px solid #FFD5C8',borderRadius:12,padding:'12px 14px',marginBottom:12,fontSize:13,color:'#C0391B' }}>
+              Agrega al menos una meta para continuar.
+            </div>
+          )}
+          {goalDraft.map((goal, idx) => {
+            const Icon = ICON_MAP[goal.iconName] || IconBook;
+            const isOpen = activeIcon === idx;
+            return (
+              <div key={goal.id} style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',marginBottom:10 }}>
+                <div style={{ display:'flex',alignItems:'center',gap:12 }}>
+                  <button onClick={()=>setActiveIcon(isOpen?null:idx)} style={{ width:42,height:42,borderRadius:12,background:'#F5F3EC',border:isOpen?'2px solid #111':'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0 }}>
+                    <Icon size={20} color="#111"/>
+                  </button>
+                  <input value={goal.name} onChange={e=>updateGoal(idx,{name:e.target.value})} placeholder="Nombre de la meta" style={{ flex:1,fontSize:16,fontWeight:600,color:'#111',border:'none',background:'transparent',outline:'none',fontFamily:'inherit' }}/>
+                  {goalDraft.length > 1 && (
+                    <button onClick={()=>deleteGoal(idx)} style={{ width:32,height:32,borderRadius:999,background:'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#BBB" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  )}
+                </div>
+                {isOpen && (
+                  <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid #F0EDE4' }}>
+                    {ICON_OPTIONS.map(opt=>(
+                      <button key={opt.name} onClick={()=>{updateGoal(idx,{iconName:opt.name});setActiveIcon(null);}} style={{ width:42,height:42,borderRadius:11,background:goal.iconName===opt.name?'#111':'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
+                        <opt.Icon size={20} color={goal.iconName===opt.name?'#fff':'#555'}/>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {step===4 && (
         <div style={{ flex:1,display:'flex',flexDirection:'column',justifyContent:'center',padding:'0 28px',textAlign:'center' }}>
           <div style={{ fontSize:11,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600 }}>Tu compañero</div>
           <div style={{ display:'flex',justifyContent:'center',margin:'12px 0' }}>
@@ -373,7 +446,7 @@ function Onboarding({ onDone }) {
       )}
       <div style={{ padding:'12px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',display:'flex',gap:10 }}>
         {step>0 && <button onClick={()=>setStep(s=>s-1)} style={{ padding:'16px 22px',background:'#F5F3EC',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#111',fontFamily:'inherit',cursor:'pointer' }}>Atrás</button>}
-        <button onClick={()=>{ if(step<3) setStep(s=>s+1); else onDone({typeKey,animalKey}); }} style={{ flex:1,padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',fontFamily:'inherit',cursor:'pointer' }}>{step===3?'Empezar':'Siguiente'}</button>
+        <button onClick={()=>{ if(step<4) handleNext(); else onDone({typeKey,animalKey,goalDraft}); }} style={{ flex:1,padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',fontFamily:'inherit',cursor:'pointer' }}>{step===4?'Empezar':'Siguiente'}</button>
       </div>
     </div>
   );
@@ -384,6 +457,102 @@ function Onboarding({ onDone }) {
 // ═══════════════════════════════════════════════════════════════
 
 const STAGE_THRESHOLDS = [0, 10, 20, 30];
+
+const ANIMAL_ORDER  = ['cat','dragon','bird','amphibian','bear'];
+const TYPE_ORDER    = ['fire','water','psychic','grass','electric'];
+const VARIANT_ORDER = ['a','b','c'];
+function creatureNumber(animalKey, typeKey, variantKey) {
+  const ai = ANIMAL_ORDER.indexOf(animalKey);
+  const ti = TYPE_ORDER.indexOf(typeKey);
+  const vi = VARIANT_ORDER.indexOf(variantKey || 'a');
+  if (ai < 0 || ti < 0 || vi < 0) return 0;
+  return ai * 15 + ti * 3 + vi + 1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CELEBRATION SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+function CelebrationScreen({ creature, onContinue }) {
+  const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
+  const type   = CREATURE_TYPES[creature.typeKey];
+  const animal = CREATURE_ANIMALS[creature.animalKey];
+  const vKey   = creature.variantKey || 'a';
+  const totalDone   = (creature.dailyLog || []).filter(Boolean).length;
+  const totalFailed = (creature.dailyLog || []).filter(v => !v).length;
+  const goalNames   = creature.goalNames || [];
+  const goalLog     = creature.goalLog   || {};
+
+  const DOT = 8, GAP = 3;
+
+  return (
+    <div style={{ height:'100%', background:'#FAFAF7', color:'#111', fontFamily:'-apple-system,system-ui', display:'flex', flexDirection:'column', overflow:'auto' }}>
+      {/* Header con criatura */}
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'calc(env(safe-area-inset-top,44px) + 24px) 24px 20px' }}>
+        <div style={{ position:'relative', marginBottom:16 }}>
+          <div style={{ width:160, height:160, borderRadius:999, background:type.soft, display:'flex', alignItems:'center', justifyContent:'center',
+            boxShadow:`0 0 0 4px ${type.color}40, 0 0 40px ${type.color}60, 0 0 80px ${type.color}30` }}>
+            <Creature stage={3} size={130} type={type} animal={animal} typeKey={creature.typeKey} animalKey={creature.animalKey} variantKey={vKey} bounce={true}/>
+          </div>
+        </div>
+        <div style={{ fontSize:11, letterSpacing:2, textTransform:'uppercase', color:type.color, fontWeight:700, marginBottom:6 }}>¡Ciclo completado!</div>
+        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-0.8, textAlign:'center', lineHeight:1.2 }}>{animal.name} · {type.name}</div>
+        <div style={{ fontSize:13, color:'#999', marginTop:4 }}>{VARIANT_LABEL[vKey]} · Fase Final · 30 días</div>
+      </div>
+
+      {/* Gráfica de contribuciones */}
+      <div style={{ margin:'0 20px 20px', background:'#fff', border:'1px solid #EFEDE3', borderRadius:16, padding:'16px 18px' }}>
+        <div style={{ fontSize:11, letterSpacing:1.5, textTransform:'uppercase', color:'#BBB', fontWeight:600, marginBottom:14 }}>Progreso por meta</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {goalNames.length > 0 ? goalNames.map(g => (
+            <div key={g.id} style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ fontSize:11, color:'#999', width:72, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{g.name}</div>
+              <div style={{ display:'flex', gap:GAP, flexWrap:'wrap' }}>
+                {Array.from({length:30},(_,i)=>{
+                  const done = (goalLog[g.id]||[])[i];
+                  const known = (goalLog[g.id]||[]).length > i;
+                  return <div key={i} style={{ width:DOT, height:DOT, borderRadius:2, background: known ? (done?'#2F8B3F':'#C0392B') : 'rgba(255,255,255,0.1)' }}/>;
+                })}
+              </div>
+            </div>
+          )) : (
+            <div style={{ display:'flex', gap:GAP, flexWrap:'wrap' }}>
+              {Array.from({length:30},(_,i)=>{
+                const done = (creature.dailyLog||[])[i];
+                const known = (creature.dailyLog||[]).length > i;
+                return <div key={i} style={{ width:DOT, height:DOT, borderRadius:2, background: known ? (done?'#2F8B3F':'#C0392B') : 'rgba(255,255,255,0.1)' }}/>;
+              })}
+            </div>
+          )}
+        </div>
+        <div style={{ display:'flex', gap:16, marginTop:14 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:'#2F8B3F' }}/><span style={{ fontSize:11, color:'#AAA' }}>Completado</span></div>
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:'#C0392B' }}/><span style={{ fontSize:11, color:'#AAA' }}>Fallado</span></div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ margin:'0 20px 20px', display:'flex', gap:10 }}>
+        {[['Días completados', totalDone, '#2F8B3F'],['Días fallados', totalFailed, '#C0392B']].map(([label,val,color])=>(
+          <div key={label} style={{ flex:1, background:'#fff', border:'1px solid #EFEDE3', borderRadius:14, padding:'14px 16px' }}>
+            <div style={{ fontSize:26, fontWeight:800, color }}>{val}</div>
+            <div style={{ fontSize:11, color:'#AAA', marginTop:2 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Botones */}
+      <div style={{ padding:'0 20px calc(env(safe-area-inset-bottom,0px) + 28px)', display:'flex', flexDirection:'column', gap:10, marginTop:'auto' }}>
+        <button onClick={()=>{}} style={{ padding:'16px', background:'#F5F3EC', border:'1px solid #EFEDE3', borderRadius:14, fontSize:15, fontWeight:600, color:'#BBB', fontFamily:'inherit', cursor:'default' }}>
+          Compartir logro
+        </button>
+        <button onClick={onContinue} style={{ padding:'16px', background:'#111', border:'none', borderRadius:14, fontSize:15, fontWeight:700, color:'#fff', fontFamily:'inherit', cursor:'pointer' }}>
+          Elegir nueva criatura
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function Pokedex({ entries=[], onBack }) {
   const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
@@ -413,7 +582,7 @@ function Pokedex({ entries=[], onBack }) {
               {/* Header */}
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14 }}>
                 <div>
-                  <div style={{ fontSize:10,color:'#BBB',letterSpacing:1,fontWeight:600,marginBottom:2 }}>#{String(e.id).padStart(3,'0')}</div>
+                  <div style={{ fontSize:10,color:'#BBB',letterSpacing:1,fontWeight:600,marginBottom:2 }}>#{String(creatureNumber(e.animalKey,e.typeKey,e.variantKey)).padStart(3,'0')}</div>
                   <div style={{ fontSize:16,fontWeight:700,letterSpacing:-0.3,color:broken?'#888':'#111' }}>{animal.name} <span style={{ color:type.color }}>·</span> {type.name}</div>
                   <div style={{ fontSize:11,color:'#AAA',marginTop:2 }}>{VARIANT_LABEL[variantKey]} · {e.reason}</div>
                 </div>
@@ -478,7 +647,7 @@ function GoalTile({ goal, onToggle, onPomodoro, type }) {
 }
 
 function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPokedex, onOpenSettings, onClearJustEvolved }) {
-  const { goals, streak, totalDays, failedDays=0, note, type, animal, typeKey, animalKey, variantKey, justEvolved=false } = data;
+  const { goals, streak, totalDays, failedDays=0, note, type, animal, typeKey, animalKey, variantKey, justEvolved=false, dailyLog=[], startedAt, cycleNumber=1 } = data;
   const completed = goals.filter(g=>g.done).length, pct = completed/goals.length, stage = creatureStageFor(totalDays), nextAt = STAGE_NEXT[stage];
   const now = new Date();
   const dayName = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][now.getDay()];
@@ -499,6 +668,50 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
   const [previewStage, setPreviewStage]   = React.useState(null);
   const prevCompleted   = React.useRef(completed);
   const prevFailedDays  = React.useRef(null);
+
+  // Creature info tooltip
+  const [showCreatureInfo, setShowCreatureInfo] = React.useState(false);
+
+  // Milestone de racha
+  const MILESTONES = [7, 14, 21, 30];
+  const [showMilestone, setShowMilestone] = React.useState(() => MILESTONES.includes(streak) && streak > 0);
+  React.useEffect(() => {
+    if (showMilestone) { const t = setTimeout(() => setShowMilestone(false), 4000); return () => clearTimeout(t); }
+  }, [showMilestone]);
+
+  // Mini historial semanal
+  const weekDots = React.useMemo(() => {
+    const todayD = new Date();
+    const todayStr2 = todayD.toISOString().slice(0,10);
+    const dow = todayD.getDay();
+    const monday = new Date(todayD);
+    monday.setDate(todayD.getDate() - ((dow + 6) % 7));
+    return ['L','M','X','J','V','S','D'].map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dStr = d.toISOString().slice(0,10);
+      if (dStr > todayStr2) return { label, state: 'future' };
+      if (dStr === todayStr2) return { label, state: completed === goals.length ? 'done' : 'today' };
+      if (!startedAt || dStr < startedAt) return { label, state: 'empty' };
+      const diffDays = Math.round((d - new Date(startedAt + 'T00:00:00')) / 86400000);
+      if (diffDays < 0 || diffDays >= dailyLog.length) return { label, state: 'empty' };
+      return { label, state: dailyLog[diffDays] ? 'done' : 'missed' };
+    });
+  }, [dailyLog, startedAt, completed, goals.length]);
+
+  // Urgencia nocturna
+  const urgencyText = React.useMemo(() => {
+    const h = now.getHours();
+    if (h < 19 || completed === goals.length) return null;
+    const hoursLeft = 23 - h;
+    if (hoursLeft === 0) return 'Menos de 1 hora del día';
+    return `${hoursLeft}h ${59 - now.getMinutes()}m para cerrar el día`;
+  }, []);
+
+  // Progreso de etapa
+  const stageStarts = [0, 10, 20, 30];
+  const stageEnds   = [10, 20, 30, 30];
+  const stagePct    = stage === 3 ? 1 : Math.min((totalDays - stageStarts[stage]) / (stageEnds[stage] - stageStarts[stage]), 1);
 
   const displayStage = previewStage !== null ? previewStage : stage;
 
@@ -577,6 +790,7 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
         <div>
           <div style={{ fontSize:12,color:'#999',letterSpacing:1.5,textTransform:'uppercase',fontWeight:600 }}>{dayName}</div>
           <div style={{ fontSize:22,color:'#111',fontWeight:600,letterSpacing:-0.4,marginTop:2 }}>{dateStr}</div>
+          {urgencyText && <div style={{ fontSize:11,color:'#D97706',fontWeight:600,marginTop:2 }}>⏰ {urgencyText}</div>}
         </div>
         <div style={{ display:'flex',gap:8 }}>
           <button onClick={onOpenPokedex} style={{ height:36,padding:'0 12px',display:'flex',alignItems:'center',gap:5,background:'#fff',color:'#111',border:'1px solid #EFEDE3',borderRadius:999,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
@@ -586,11 +800,37 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
           <button onClick={onOpenSettings} style={{ width:36,height:36,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}><IconGear size={16} color="#666"/></button>
         </div>
       </div>
+      {/* Mini historial semanal */}
+      <div style={{ display:'flex',alignItems:'flex-end',gap:6,padding:'10px 20px 0' }}>
+        {weekDots.map((dot, i) => (
+          <div key={i} style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:3 }}>
+            <div style={{ width:11,height:11,borderRadius:3,
+              background: dot.state==='done' ? '#2F8B3F' : dot.state==='missed' ? '#E8534A' : dot.state==='today' ? '#E5E2D8' : '#F0EDE4',
+              outline: dot.state==='today' ? '1.5px solid #BBB' : 'none', outlineOffset:1
+            }}/>
+            <span style={{ fontSize:9,fontWeight:700,color: dot.state==='today'?'#666':'#CCC',letterSpacing:0.3 }}>{dot.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Milestone banner */}
+      {showMilestone && (
+        <div style={{ margin:'10px 20px 0',background:'linear-gradient(135deg,#D97706,#F59E0B)',borderRadius:12,padding:'10px 16px',display:'flex',alignItems:'center',gap:8,animation:'milestoneIn 0.4s cubic-bezier(0.2,0.8,0.3,1)' }}>
+          <style>{`@keyframes milestoneIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}`}</style>
+          <span style={{ fontSize:18 }}>🔥</span>
+          <div>
+            <div style={{ fontSize:13,fontWeight:700,color:'#fff' }}>¡{streak} días seguidos!</div>
+            <div style={{ fontSize:11,color:'rgba(255,255,255,0.8)' }}>Sigue así, no lo rompas</div>
+          </div>
+        </div>
+      )}
       {/* Stats strip */}
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 20px 0' }}>
-        <div style={{ display:'flex',alignItems:'center',gap:6,background:VARIANT_SOFT[variantKey],padding:'6px 12px',borderRadius:999 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24">{variantIcon}</svg>
-          <span style={{ fontSize:12,fontWeight:700,color:VARIANT_COLOR[variantKey],letterSpacing:0.3 }}>{VARIANT_LABEL[variantKey]}</span>
+        <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:6,background:VARIANT_SOFT[variantKey],padding:'6px 12px',borderRadius:999 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24">{variantIcon}</svg>
+            <span style={{ fontSize:12,fontWeight:700,color:VARIANT_COLOR[variantKey],letterSpacing:0.3 }}>{VARIANT_LABEL[variantKey]}</span>
+          </div>
+          <div style={{ fontSize:11,fontWeight:600,color:'#BBB',letterSpacing:0.3 }}>Criatura #{cycleNumber}</div>
         </div>
         <div style={{ display:'flex',alignItems:'center',gap:8 }}>
           <div style={{ display:'flex',alignItems:'center',gap:3, animation: shakingHearts ? 'heartShake 0.9s ease' : 'none' }}>
@@ -600,7 +840,10 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
               </svg>
             ))}
           </div>
-          <div style={{ display:'flex',alignItems:'center',gap:5,background:'#111',color:'#fff',padding:'0 12px',height:32,borderRadius:999 }}><IconFlame size={12} color="#fff" weight={2.2}/><span style={{ fontSize:12,fontWeight:600 }}>{streak}</span></div>
+          <div style={{ display:'flex',alignItems:'center',gap:5,background:MILESTONES.includes(streak)?'#D97706':'#111',color:'#fff',padding:'0 12px',height:32,borderRadius:999,transition:'background 0.3s' }}>
+            <IconFlame size={12} color="#fff" weight={2.2}/>
+            <span style={{ fontSize:12,fontWeight:600 }}>{streak}</span>
+          </div>
         </div>
       </div>
       <div style={{ display:'flex',justifyContent:'center',marginTop:22,position:'relative' }}>
@@ -610,18 +853,42 @@ function VariantSerenity({ data, onToggle, onOpenPomodoro, onOpenNote, onOpenPok
           {goals.map((g,i)=>{ const angle=(i/goals.length)*2*Math.PI-Math.PI/2, x=130+Math.cos(angle)*116, y=130+Math.sin(angle)*116; return <circle key={g.id} cx={x} cy={y} r="5" fill={g.done?type.color:'#FAFAF7'} stroke={type.color} strokeWidth="2"/>; })}
         </svg>
         <div style={{ position:'absolute',top:0,left:0,right:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
-          <div style={{ animation: evolving ? 'evolutionPulse 1.8s ease forwards' : 'none' }}>
+          <div style={{ animation: evolving ? 'evolutionPulse 1.8s ease forwards' : 'none' }} onClick={()=>setShowCreatureInfo(v=>!v)}>
             <Creature stage={displayStage} size={140} type={type} animal={animal} typeKey={typeKey} animalKey={animalKey} variantKey={variantKey}/>
           </div>
         </div>
+        {/* Creature info tooltip */}
+        {showCreatureInfo && (
+          <div onClick={()=>setShowCreatureInfo(false)} style={{ position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'rgba(17,17,17,0.92)',color:'#fff',borderRadius:16,padding:'12px 18px',textAlign:'center',backdropFilter:'blur(8px)',pointerEvents:'auto',animation:'milestoneIn 0.2s ease',minWidth:160 }}>
+            <div style={{ fontSize:14,fontWeight:700 }}>{animal.name} {type.name}</div>
+            <div style={{ fontSize:11,color:'rgba(255,255,255,0.6)',marginTop:2 }}>{VARIANT_LABEL[variantKey]} · {STAGE_NAMES[stage]}</div>
+            <div style={{ fontSize:11,color:type.color,marginTop:6,fontWeight:600 }}>
+              {stage < 3 ? `${nextAt - totalDays} días para evolucionar` : '¡Forma final alcanzada!'}
+            </div>
+          </div>
+        )}
       </div>
       <div style={{ textAlign:'center',fontSize:10,color:'#999',letterSpacing:1.5,fontWeight:600,textTransform:'uppercase',marginTop:6 }}>{STAGE_NAMES[stage]} · día {totalDays}/30</div>
-      <div style={{ textAlign:'center',marginTop:6 }}>
+      <div style={{ textAlign:'center',marginTop:4 }}>
         <div style={{ fontSize:36,fontWeight:700,color:'#111',letterSpacing:-1 }}>{completed}<span style={{ color:'#C8C4B7' }}>/{goals.length}</span></div>
-        <div style={{ fontSize:13,color:'#999',marginTop:-4 }}>{completed===goals.length?'¡Día perfecto!':nextAt?`evoluciona en ${nextAt-totalDays} días`:'forma final alcanzada'}</div>
+        {completed === goals.length
+          ? <div style={{ fontSize:13,color:'#2F8B3F',fontWeight:600,marginTop:-2 }}>¡Día perfecto!</div>
+          : stage < 3
+          ? <div style={{ padding:'6px 24px 0' }}>
+              <div style={{ display:'flex',justifyContent:'space-between',fontSize:10,color:'#BBB',marginBottom:4 }}>
+                <span>{STAGE_NAMES[stage]}</span>
+                <span>{nextAt - totalDays} días</span>
+              </div>
+              <div style={{ height:5,background:'#ECEAE2',borderRadius:999,overflow:'hidden' }}>
+                <div style={{ height:'100%',width:`${stagePct*100}%`,background:type.color,borderRadius:999,transition:'width 0.8s cubic-bezier(0.4,0,0.2,1)' }}/>
+              </div>
+              <div style={{ fontSize:10,color:'#CCC',marginTop:3,textAlign:'right' }}>{STAGE_NAMES[Math.min(stage+1,3)]}</div>
+            </div>
+          : <div style={{ fontSize:12,color:'#999',marginTop:-2 }}>Forma final alcanzada ✦</div>
+        }
       </div>
       <div style={{ padding:'18px 20px 10px',display:'flex',flexDirection:'column',gap:8 }}>
-        {goals.map(g=><GoalTile key={g.id} goal={g} type={type} onToggle={()=>onToggle(g.id)} onPomodoro={g.id==='meditate'?()=>onOpenPomodoro(g):null}/>)}
+        {goals.map(g=><GoalTile key={g.id} goal={g} type={type} onToggle={()=>onToggle(g.id)} onPomodoro={null}/>)}
       </div>
       <div style={{ marginTop:'auto',padding:'6px 20px calc(env(safe-area-inset-bottom,0px) + 28px)',display:'flex',gap:10 }}>
         <button onClick={onOpenNote} style={{ flex:1,background:'none',border:'1px solid #E5E2D8',borderRadius:14,padding:'14px',display:'flex',alignItems:'center',gap:10,color:'#111',fontSize:14,fontWeight:500,fontFamily:'inherit',cursor:'pointer' }}>
@@ -766,7 +1033,7 @@ function hydrateGoals(goals) { return goals.map(g=>({...g, icon: ICON_MAP[g.icon
 function dehydrateGoals(goals) { return goals.map(({icon,...rest})=>rest); }
 
 function defaultAppState() {
-  return { hasOnboarded:false, typeKey:'psychic', animalKey:'cat', variantKey:'a', goals:DEFAULT_GOALS_RAW, streak:0, totalDays:0, failedDays:0, lastDate:todayStr(), note:'', startedAt:todayStr(), pokedexHistory:[] };
+  return { hasOnboarded:false, typeKey:'psychic', animalKey:'cat', variantKey:'a', goals:DEFAULT_GOALS_RAW, streak:0, totalDays:0, failedDays:0, lastDate:todayStr(), note:'', startedAt:todayStr(), pokedexHistory:[], dailyLog:[], lastCreature:null };
 }
 
 function migrateState(state) {
@@ -777,6 +1044,8 @@ function migrateState(state) {
     animalKey: migrateAnimal(state.animalKey),
     variantKey: state.variantKey || 'a',
     failedDays: state.failedDays || 0,
+    dailyLog: state.dailyLog || [],
+    lastCreature: state.lastCreature || null,
     pokedexHistory: (state.pokedexHistory || []).map(e => ({
       ...e,
       animalKey: migrateAnimal(e.animalKey),
@@ -791,28 +1060,32 @@ function rolloverIfNeeded(state) {
   const today = todayStr();
   if (state.lastDate === today) return state;
   const allDone = state.goals.every(g=>g.done);
-  let { streak, totalDays, failedDays=0, pokedexHistory, typeKey, animalKey, variantKey, startedAt } = state;
+  let { streak, totalDays, failedDays=0, pokedexHistory, typeKey, animalKey, variantKey, startedAt, dailyLog=[], goalLog={} } = state;
   let newStartedAt = startedAt || today;
+  dailyLog = [...dailyLog, allDone];
+  const newGoalLog = {};
+  state.goals.forEach(g => { newGoalLog[g.id] = [...(goalLog[g.id]||[]), g.done]; });
+  goalLog = newGoalLog;
   if (allDone) {
     streak++; totalDays++;
     if (totalDays >= 30) {
+      const lastCreature = { typeKey, animalKey, variantKey, dailyLog, goalLog, goalNames: state.goals.map(g=>({id:g.id,name:g.name})), startedAt:newStartedAt, endedAt:state.lastDate };
       pokedexHistory = [...pokedexHistory, { id:Date.now(), typeKey, animalKey, variantKey, daysReached:30, startedAt:newStartedAt, endedAt:state.lastDate, reason:'completado ✓' }];
-      streak=0; totalDays=0; failedDays=0; newStartedAt=today;
-      variantKey = pickVariant(typeKey, animalKey, pokedexHistory);
+      return { ...state, streak:0, totalDays:0, failedDays:0, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:today, pokedexHistory, dailyLog:[], goalLog:{}, lastCreature, needsNewCreature:true, justEvolved:false };
     }
   } else {
     streak = 0;
     failedDays++;
     if (failedDays >= MAX_FAILED_DAYS) {
       pokedexHistory = [...pokedexHistory, { id:Date.now(), typeKey, animalKey, variantKey, daysReached:totalDays, startedAt:newStartedAt, endedAt:state.lastDate, reason:'3 días fallados 💀' }];
-      totalDays=0; failedDays=0; newStartedAt=today;
+      totalDays=0; failedDays=0; newStartedAt=today; dailyLog=[]; goalLog={};
       variantKey = pickVariant(typeKey, animalKey, pokedexHistory);
     }
   }
   const prevStageVal = creatureStageFor(state.totalDays);
   const nextStageVal = creatureStageFor(totalDays);
   const justEvolved  = nextStageVal > prevStageVal && totalDays > 0;
-  return { ...state, streak, totalDays, failedDays, variantKey, lastDate:today, goals:DEFAULT_GOALS_RAW, note:'', startedAt:newStartedAt, pokedexHistory, justEvolved };
+  return { ...state, streak, totalDays, failedDays, variantKey, lastDate:today, goals:state.goals.map(g=>({...g,done:false})), note:'', startedAt:newStartedAt, pokedexHistory, dailyLog, justEvolved };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -831,68 +1104,113 @@ const ICON_OPTIONS = [
   { name:'moon',     Icon:IconMoon     },
 ];
 
-function SettingsPanel({ goals, totalDays, onClose, onSave }) {
+function SettingsPanel({ goals, totalDays, userEmail, onClose, onSave, onLogout }) {
   const canEdit = totalDays === 0;
-  const [draft, setDraft]         = React.useState(() => goals.map(g => ({ id:g.id, name:g.name, iconName:g.iconName })));
+  const [tab, setTab]               = React.useState('metas');
+  const [draft, setDraft]           = React.useState(() => goals.map(g => ({ id:g.id, name:g.name, iconName:g.iconName })));
   const [activeIcon, setActiveIcon] = React.useState(null);
 
   const updateGoal = (idx, patch) => setDraft(d => d.map((g,i) => i===idx ? {...g,...patch} : g));
 
+  const TABS = [{ id:'metas', label:'Metas' }, { id:'cuenta', label:'Cuenta' }, { id:'about', label:'Acerca de' }];
+
   return (
     <div style={{ position:'absolute',inset:0,background:'#FAFAF7',zIndex:50,display:'flex',flexDirection:'column',fontFamily:'-apple-system,system-ui',color:'#111' }}>
-      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 16px',display:'flex',alignItems:'center',gap:14 }}>
-        <button onClick={onClose} style={{ width:40,height:40,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#111' }}>
+      {/* Header */}
+      <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 0',display:'flex',alignItems:'center',gap:14 }}>
+        <button onClick={onClose} style={{ width:40,height:40,borderRadius:999,background:'#fff',border:'1px solid #EFEDE3',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'#111',flexShrink:0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div style={{ fontSize:26,fontWeight:700,letterSpacing:-0.4 }}>Ajustes</div>
       </div>
 
-      <div style={{ flex:1,overflow:'auto',padding:'4px 20px 20px' }}>
-        <div style={{ fontSize:11,color:'#999',letterSpacing:2,textTransform:'uppercase',fontWeight:600,marginBottom:12 }}>Tus metas</div>
-
-        {!canEdit && (
-          <div style={{ background:'#FFFBEE',border:'1px solid #EFE0AA',borderRadius:14,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:10 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8860B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <div style={{ fontSize:13,color:'#7A5C00',lineHeight:1.4 }}>Podrás editarlas al final del ciclo actual. ¡Sigue adelante!</div>
-          </div>
-        )}
-
-        {draft.map((goal, idx) => {
-          const Icon = ICON_MAP[goal.iconName] || IconBook;
-          const isOpen = activeIcon === idx;
-          return (
-            <div key={goal.id} style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',marginBottom:10,opacity:canEdit?1:0.55,transition:'opacity 0.2s' }}>
-              <div style={{ display:'flex',alignItems:'center',gap:12 }}>
-                <button onClick={()=>canEdit&&setActiveIcon(isOpen?null:idx)} disabled={!canEdit} style={{ width:42,height:42,borderRadius:12,background:'#F5F3EC',border:isOpen?'2px solid #111':'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:canEdit?'pointer':'default',flexShrink:0,transition:'border 0.15s' }}>
-                  <Icon size={20} color="#111"/>
-                </button>
-                <input
-                  value={goal.name}
-                  onChange={e=>updateGoal(idx,{name:e.target.value})}
-                  disabled={!canEdit}
-                  placeholder="Nombre de la meta"
-                  style={{ flex:1,fontSize:16,fontWeight:600,color:'#111',border:'none',background:'transparent',outline:'none',fontFamily:'inherit' }}
-                />
-              </div>
-              {canEdit && isOpen && (
-                <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid #F0EDE4' }}>
-                  {ICON_OPTIONS.map(opt=>(
-                    <button key={opt.name} onClick={()=>{updateGoal(idx,{iconName:opt.name});setActiveIcon(null);}} style={{ width:42,height:42,borderRadius:11,background:goal.iconName===opt.name?'#111':'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',transition:'background 0.15s' }}>
-                      <opt.Icon size={20} color={goal.iconName===opt.name?'#fff':'#555'}/>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* Tabs */}
+      <div style={{ display:'flex',gap:6,padding:'16px 20px 0' }}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{ padding:'8px 16px',borderRadius:999,border:'none',background:tab===t.id?'#111':'#F0EDE4',color:tab===t.id?'#fff':'#666',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s' }}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {canEdit && (
-        <div style={{ padding:'12px 20px calc(env(safe-area-inset-bottom,0px) + 28px)' }}>
-          <button onClick={()=>{onSave(draft);onClose();}} style={{ width:'100%',padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',cursor:'pointer',fontFamily:'inherit' }}>
-            Guardar cambios
+      {/* ── Tab: Metas ── */}
+      {tab==='metas' && <>
+        <div style={{ flex:1,overflow:'auto',padding:'16px 20px 20px' }}>
+          {!canEdit && (
+            <div style={{ background:'#FFFBEE',border:'1px solid #EFE0AA',borderRadius:14,padding:'12px 16px',marginBottom:16,display:'flex',alignItems:'center',gap:10 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8860B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div style={{ fontSize:13,color:'#7A5C00',lineHeight:1.4 }}>Podrás editarlas al final del ciclo actual.</div>
+            </div>
+          )}
+          {draft.map((goal, idx) => {
+            const Icon = ICON_MAP[goal.iconName] || IconBook;
+            const isOpen = activeIcon === idx;
+            return (
+              <div key={goal.id} style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',marginBottom:10,opacity:canEdit?1:0.55 }}>
+                <div style={{ display:'flex',alignItems:'center',gap:12 }}>
+                  <button onClick={()=>canEdit&&setActiveIcon(isOpen?null:idx)} disabled={!canEdit} style={{ width:42,height:42,borderRadius:12,background:'#F5F3EC',border:isOpen?'2px solid #111':'2px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:canEdit?'pointer':'default',flexShrink:0 }}>
+                    <Icon size={20} color="#111"/>
+                  </button>
+                  <input value={goal.name} onChange={e=>updateGoal(idx,{name:e.target.value})} disabled={!canEdit} placeholder="Nombre de la meta" style={{ flex:1,fontSize:16,fontWeight:600,color:'#111',border:'none',background:'transparent',outline:'none',fontFamily:'inherit' }}/>
+                  {canEdit && draft.length > 1 && (
+                    <button onClick={()=>{setActiveIcon(null);setDraft(d=>d.filter((_,i)=>i!==idx));}} style={{ width:32,height:32,borderRadius:999,background:'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#BBB" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  )}
+                </div>
+                {canEdit && isOpen && (
+                  <div style={{ display:'flex',gap:8,flexWrap:'wrap',marginTop:12,paddingTop:12,borderTop:'1px solid #F0EDE4' }}>
+                    {ICON_OPTIONS.map(opt=>(
+                      <button key={opt.name} onClick={()=>{updateGoal(idx,{iconName:opt.name});setActiveIcon(null);}} style={{ width:42,height:42,borderRadius:11,background:goal.iconName===opt.name?'#111':'#F5F3EC',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
+                        <opt.Icon size={20} color={goal.iconName===opt.name?'#fff':'#555'}/>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {canEdit && (
+          <div style={{ padding:'12px 20px calc(env(safe-area-inset-bottom,0px) + 28px)' }}>
+            <button onClick={()=>{onSave(draft);onClose();}} style={{ width:'100%',padding:'16px',background:'#111',border:'none',borderRadius:14,fontSize:15,fontWeight:600,color:'#fff',cursor:'pointer',fontFamily:'inherit' }}>
+              Guardar cambios
+            </button>
+          </div>
+        )}
+      </>}
+
+      {/* ── Tab: Cuenta ── */}
+      {tab==='cuenta' && (
+        <div style={{ flex:1,overflow:'auto',padding:'16px 20px 20px' }}>
+          <div style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'16px',marginBottom:10 }}>
+            <div style={{ fontSize:11,color:'#BBB',letterSpacing:1,fontWeight:600,textTransform:'uppercase',marginBottom:4 }}>Cuenta activa</div>
+            <div style={{ fontSize:15,fontWeight:600,color:'#111' }}>{userEmail || '—'}</div>
+          </div>
+          <button onClick={onLogout} style={{ width:'100%',padding:'16px',background:'#fff',border:'1px solid #EFEDE3',borderRadius:14,fontSize:15,fontWeight:600,color:'#D94A1F',cursor:'pointer',fontFamily:'inherit',marginTop:6 }}>
+            Cerrar sesión
           </button>
+        </div>
+      )}
+
+      {/* ── Tab: About ── */}
+      {tab==='about' && (
+        <div style={{ flex:1,overflow:'auto',padding:'16px 20px 20px',display:'flex',flexDirection:'column',gap:10 }}>
+          <div style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:16,padding:'20px' }}>
+            <div style={{ fontSize:20,fontWeight:800,letterSpacing:-0.5,marginBottom:4 }}>PokeGoal</div>
+            <div style={{ fontSize:13,color:'#999',lineHeight:1.6 }}>Completa tus 3 metas diarias y evoluciona tu criatura durante 30 días. Cada ciclo completado queda guardado en tu colección.</div>
+          </div>
+          {[
+            ['Ciclo', '30 días por criatura'],
+            ['Vidas', '3 por ciclo — falla 3 días y se reinicia'],
+            ['Variantes', 'Héroe · Villano · Mago — aleatorio y sin repetir'],
+            ['Evoluciones', 'Huevo → Fase Inicial → Fase Aprendiz → Fase Final'],
+          ].map(([label, val])=>(
+            <div key={label} style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:14,padding:'14px 16px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div style={{ fontSize:13,fontWeight:600,color:'#111' }}>{label}</div>
+              <div style={{ fontSize:12,color:'#999',textAlign:'right',maxWidth:'55%' }}>{val}</div>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -929,7 +1247,7 @@ function App() {
       .then(doc => {
         let raw = doc.exists ? rolloverIfNeeded(migrateState(doc.data())) : defaultAppState();
         setAppState({ ...raw, goals: hydrateGoals(raw.goals) });
-        setScreen(raw.hasOnboarded ? 'home' : 'onboard');
+        setScreen(raw.needsNewCreature && raw.lastCreature ? 'celebration' : raw.needsNewCreature ? 'onboard' : raw.hasOnboarded ? 'home' : 'onboard');
         isFirstLoad.current = false;
       })
       .catch(() => {
@@ -969,9 +1287,11 @@ function App() {
     }));
   };
 
-  const handleOnboardDone = ({typeKey, animalKey}) => {
-    const variantKey = pickVariant(typeKey, animalKey, []);
-    update({ hasOnboarded:true, typeKey, animalKey, variantKey, startedAt:todayStr() });
+  const handleOnboardDone = ({typeKey, animalKey, goalDraft}) => {
+    const history = appState?.pokedexHistory || [];
+    const variantKey = pickVariant(typeKey, animalKey, history);
+    const goals = goalDraft ? hydrateGoals(goalDraft.map(g => ({ ...g, done:false, streak:0 }))) : appState.goals;
+    update({ hasOnboarded:true, typeKey, animalKey, variantKey, startedAt:todayStr(), needsNewCreature:false, goals });
     setScreen('home');
   };
 
@@ -992,13 +1312,16 @@ function App() {
     typeKey: appState.typeKey, animalKey: appState.animalKey, variantKey: appState.variantKey || 'a', failedDays: appState.failedDays || 0,
     type: CREATURE_TYPES[appState.typeKey], animal: CREATURE_ANIMALS[appState.animalKey],
     justEvolved: appState.justEvolved || false,
+    dailyLog: appState.dailyLog || [], startedAt: appState.startedAt || todayStr(),
+    cycleNumber: (appState.pokedexHistory || []).length + 1,
   };
 
   return (
     <div style={{ position:'relative',width:'100%',height:'100%',overflow:'hidden' }}>
-      {screen==='onboard'  && <Onboarding onDone={handleOnboardDone}/>}
+      {screen==='celebration' && <CelebrationScreen creature={appState.lastCreature} onContinue={()=>{ update({lastCreature:null}); setScreen('onboard'); }}/>}
+      {screen==='onboard'  && <Onboarding onDone={handleOnboardDone} pokedexHistory={appState?.pokedexHistory || []}/>}
       {screen==='home'     && <VariantSerenity data={data} onToggle={toggleGoal} onOpenPomodoro={g=>setPomo({goal:g})} onOpenNote={()=>setNoteOpen(true)} onOpenPokedex={()=>setScreen('pokedex')} onOpenSettings={()=>setSettingsOpen(true)} onClearJustEvolved={()=>update({justEvolved:false})}/>}
-      {settingsOpen && <SettingsPanel goals={appState.goals} totalDays={appState.totalDays} onClose={()=>setSettingsOpen(false)} onSave={handleSaveGoals}/>}
+      {settingsOpen && <SettingsPanel goals={appState.goals} totalDays={appState.totalDays} userEmail={user?.email} onClose={()=>setSettingsOpen(false)} onSave={handleSaveGoals} onLogout={()=>{ auth.signOut(); setSettingsOpen(false); }}/>}
       {screen==='pokedex'  && <Pokedex entries={pokedexEntries} onBack={()=>setScreen('home')}/>}
       <PomodoroModal open={!!pomo} goalName={pomo?.goal?.name} durationMin={pomo?.goal?.id==='meditate'?10:25} onClose={()=>setPomo(null)}/>
       <NoteModal open={noteOpen} initial={appState.note} onClose={()=>setNoteOpen(false)} onSave={note=>update({note})}/>
