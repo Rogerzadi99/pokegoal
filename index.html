@@ -631,8 +631,20 @@ function Pokedex({ entries=[], onBack }) {
 
 function GoalTile({ goal, onToggle, onPomodoro, type }) {
   const Icon = goal.icon;
+  const [bouncing, setBouncing] = React.useState(false);
+  const prevDone = React.useRef(goal.done);
+
+  React.useEffect(() => {
+    if (goal.done && !prevDone.current) {
+      setBouncing(true);
+      setTimeout(() => setBouncing(false), 400);
+    }
+    prevDone.current = goal.done;
+  }, [goal.done]);
+
   return (
-    <div onClick={onToggle} style={{ display:'flex',alignItems:'center',gap:14,background:goal.done?'#111':'#fff',border:goal.done?'1px solid #111':'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',cursor:'pointer',transition:'all 0.25s ease' }}>
+    <div onClick={onToggle} style={{ display:'flex',alignItems:'center',gap:14,background:goal.done?'#111':'#fff',border:goal.done?'1px solid #111':'1px solid #EFEDE3',borderRadius:16,padding:'14px 16px',cursor:'pointer',transition:'all 0.25s ease',animation:bouncing?'goalBounce 0.4s cubic-bezier(0.36,0.07,0.19,0.97)':'none' }}>
+    <style>{`@keyframes goalBounce{0%{transform:scale(1)}30%{transform:scale(1.06)}60%{transform:scale(0.97)}80%{transform:scale(1.02)}100%{transform:scale(1)}}`}</style>
       <div style={{ width:36,height:36,borderRadius:10,background:goal.done?'rgba(255,255,255,0.1)':(type?type.soft:'#F5F3EC'),display:'flex',alignItems:'center',justifyContent:'center',color:goal.done?'#fff':'#111' }}><Icon size={20} weight={2}/></div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:16,fontWeight:600,color:goal.done?'#fff':'#111',letterSpacing:-0.2 }}>{goal.name}</div>
