@@ -589,8 +589,78 @@ function CelebrationScreen({ creature, onContinue }) {
   );
 }
 
-function Pokedex({ entries=[], onBack }) {
+function CreatureDetailModal({ entry, stage, onClose, currentGoals, currentGoalLog }) {
+  const type    = CREATURE_TYPES[entry.typeKey];
+  const animal  = CREATURE_ANIMALS[entry.animalKey];
+  const vKey    = entry.variantKey || 'a';
   const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
+  const name    = getCreatureName(entry.animalKey, entry.typeKey, vKey);
+  const num     = String(creatureNumber(entry.animalKey, entry.typeKey, vKey)).padStart(3,'0');
+
+  // Goals: para la criatura actual usamos currentGoals/currentGoalLog
+  const goals    = entry.current ? (currentGoals || []) : (entry.goalNames || []);
+  const goalLog  = entry.current ? (currentGoalLog || {}) : (entry.goalLog || {});
+  const hasGoals = goals.length > 0;
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed',inset:0,zIndex:200,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'flex-end',fontFamily:'-apple-system,system-ui',animation:'noteBg 0.25s ease' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%',background:'#FAFAF7',borderTopLeftRadius:28,borderTopRightRadius:28,padding:'24px 24px calc(env(safe-area-inset-bottom,0px)+32px)',animation:'noteSheet 0.35s cubic-bezier(0.2,0.8,0.3,1)' }}>
+        <div style={{ width:36,height:4,background:'#E0E0E0',borderRadius:2,margin:'0 auto 20px' }}/>
+        {/* Criatura grande */}
+        <div style={{ display:'flex',flexDirection:'column',alignItems:'center',marginBottom:20 }}>
+          <div style={{ width:160,height:160,borderRadius:999,background:type.soft,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 0 3px ${type.color}30, 0 0 32px ${type.color}25`,marginBottom:14 }}>
+            <Creature stage={stage} size={130} type={type} animal={animal} typeKey={entry.typeKey} animalKey={entry.animalKey} variantKey={vKey} bounce={true}/>
+          </div>
+          <div style={{ fontSize:10,color:'#BBB',letterSpacing:1.5,fontWeight:600,marginBottom:4 }}>#{num}</div>
+          <div style={{ fontSize:24,fontWeight:800,letterSpacing:-0.5,color:'#111' }}>{name}</div>
+          <div style={{ fontSize:13,color:'#999',marginTop:3 }}>{animal.name} · {type.name} · {VARIANT_LABEL[vKey]}</div>
+          <div style={{ marginTop:8,padding:'4px 14px',background:type.soft,borderRadius:999 }}>
+            <span style={{ fontSize:12,fontWeight:700,color:type.color }}>{STAGE_NAMES[stage]}</span>
+          </div>
+        </div>
+        {/* Metas */}
+        {hasGoals && (
+          <div style={{ background:'#fff',border:'1px solid #EFEDE3',borderRadius:18,padding:'14px 16px' }}>
+            <div style={{ fontSize:11,color:'#BBB',letterSpacing:1.5,fontWeight:600,textTransform:'uppercase',marginBottom:12 }}>Metas del ciclo</div>
+            <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+              {goals.map(g => {
+                const id  = g.id || g.id;
+                const log = goalLog[id] || [];
+                const done = log.filter(Boolean).length;
+                const total = log.length;
+                const pct = total > 0 ? done / total : null;
+                const Icon = ICON_MAP[g.iconName] || IconBook;
+                return (
+                  <div key={id} style={{ display:'flex',alignItems:'center',gap:12 }}>
+                    <div style={{ width:34,height:34,borderRadius:10,background:type.soft,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+                      <Icon size={17} color={type.color} weight={2}/>
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:14,fontWeight:600,color:'#111',marginBottom:3 }}>{g.name}</div>
+                      {pct !== null
+                        ? <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+                            <div style={{ flex:1,height:4,background:'#ECEAE2',borderRadius:999,overflow:'hidden' }}>
+                              <div style={{ height:'100%',width:`${pct*100}%`,background:pct===1?'#2F8B3F':type.color,borderRadius:999 }}/>
+                            </div>
+                            <span style={{ fontSize:11,color:'#AAA',flexShrink:0 }}>{done}/{total}</span>
+                          </div>
+                        : <div style={{ fontSize:11,color:'#CCC' }}>Sin datos</div>
+                      }
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Pokedex({ entries=[], currentGoals=[], currentGoalLog={}, onBack }) {
+  const VARIANT_LABEL = { a:'Héroe', b:'Villano', c:'Mago' };
+  const [selected, setSelected] = React.useState(null); // {entry, stage}
   return (
     <div style={{ height:'100%',background:'#FAFAF7',fontFamily:'-apple-system,system-ui',color:'#111',display:'flex',flexDirection:'column' }}>
       <div style={{ padding:'calc(env(safe-area-inset-top,44px) + 18px) 24px 16px',display:'flex',alignItems:'center',gap:14 }}>
@@ -637,7 +707,7 @@ function Pokedex({ entries=[], onBack }) {
                   const slotBg = unlocked ? (broken ? '#F5F3EC' : type.soft) : '#F0EEE6';
                   return (
                     <div key={s} style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5 }}>
-                      <div style={{ width:'100%',height:78,borderRadius:12,background:slotBg,display:'flex',alignItems:'center',justifyContent:'center',border:isCurrentStage?`2px solid ${type.color}`:'2px solid transparent',position:'relative' }}>
+                      <div onClick={()=>{ if(unlocked && !broken) setSelected({entry:e, stage:s}); }} style={{ width:'100%',height:78,borderRadius:12,background:slotBg,display:'flex',alignItems:'center',justifyContent:'center',border:isCurrentStage?`2px solid ${type.color}`:'2px solid transparent',position:'relative',cursor:unlocked&&!broken?'pointer':'default' }}>
                         {unlocked
                           ? <Creature stage={s} size={60} type={type} animal={animal} typeKey={e.typeKey} animalKey={e.animalKey} variantKey={variantKey} bounce={isCurrentStage} mono={broken}/>
                           : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -657,6 +727,15 @@ function Pokedex({ entries=[], onBack }) {
           );
         })}
       </div>
+      {selected && (
+        <CreatureDetailModal
+          entry={selected.entry}
+          stage={selected.stage}
+          currentGoals={currentGoals}
+          currentGoalLog={currentGoalLog}
+          onClose={()=>setSelected(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1376,7 +1455,7 @@ function App() {
       {screen==='onboard'  && <Onboarding onDone={handleOnboardDone} pokedexHistory={appState?.pokedexHistory || []}/>}
       {screen==='home'     && <VariantSerenity data={data} onToggle={toggleGoal} onOpenPomodoro={g=>setPomo({goal:g})} onOpenNote={()=>setNoteOpen(true)} onOpenPokedex={()=>setScreen('pokedex')} onOpenSettings={()=>setSettingsOpen(true)} onClearJustEvolved={()=>update({justEvolved:false})}/>}
       {settingsOpen && <SettingsPanel goals={appState.goals} totalDays={appState.totalDays} userEmail={user?.email} onClose={()=>setSettingsOpen(false)} onSave={handleSaveGoals} onLogout={()=>{ auth.signOut(); setSettingsOpen(false); }}/>}
-      {screen==='pokedex'  && <Pokedex entries={pokedexEntries} onBack={()=>setScreen('home')}/>}
+      {screen==='pokedex'  && <Pokedex entries={pokedexEntries} currentGoals={appState.goals} currentGoalLog={appState.goalLog||{}} onBack={()=>setScreen('home')}/>}
       <PomodoroModal open={!!pomo} goalName={pomo?.goal?.name} durationMin={pomo?.goal?.id==='meditate'?10:25} onClose={()=>setPomo(null)}/>
       <NoteModal open={noteOpen} initial={appState.note} onClose={()=>setNoteOpen(false)} onSave={note=>update({note})}/>
     </div>
