@@ -1,4 +1,4 @@
-const CACHE = 'serenidad-v1';
+const CACHE = 'serenidad-v6';
 const ASSETS = [
   './',
   './index.html',
